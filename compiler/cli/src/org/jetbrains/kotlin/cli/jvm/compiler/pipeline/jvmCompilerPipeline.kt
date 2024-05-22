@@ -159,7 +159,8 @@ fun compileModulesUsingFrontendIrAndLightTree(
 fun convertAnalyzedFirToIr(
     input: ModuleCompilerInput,
     analysisResults: FirResult,
-    environment: ModuleCompilerEnvironment
+    environment: ModuleCompilerEnvironment,
+    skipBodies: Boolean = false // TODO
 ): ModuleCompilerIrBackendInput {
     val extensions = JvmFir2IrExtensions(input.configuration, JvmIrDeserializerImpl())
 
@@ -169,7 +170,7 @@ fun convertAnalyzedFirToIr(
         } ?: emptyList()
     val (moduleFragment, components, pluginContext, irActualizedResult, _, symbolTable) =
         analysisResults.convertToIrAndActualizeForJvm(
-            extensions, input.configuration, environment.diagnosticsReporter, irGenerationExtensions,
+            extensions, input.configuration, environment.diagnosticsReporter, irGenerationExtensions, skipBodies
         )
 
     return ModuleCompilerIrBackendInput(
@@ -189,11 +190,12 @@ fun FirResult.convertToIrAndActualizeForJvm(
     configuration: CompilerConfiguration,
     diagnosticsReporter: BaseDiagnosticsCollector,
     irGeneratorExtensions: Collection<IrGenerationExtension>,
+    skipBodies: Boolean = false, // TODO
 ): Fir2IrActualizedResult {
     val performanceManager = configuration[CLIConfigurationKeys.PERF_MANAGER]
     performanceManager?.notifyIRTranslationStarted()
 
-    val fir2IrConfiguration = Fir2IrConfiguration.forJvmCompilation(configuration, diagnosticsReporter)
+    val fir2IrConfiguration = Fir2IrConfiguration.forJvmCompilation(configuration, diagnosticsReporter, skipBodies)
 
     return convertToIrAndActualize(
         fir2IrExtensions,
