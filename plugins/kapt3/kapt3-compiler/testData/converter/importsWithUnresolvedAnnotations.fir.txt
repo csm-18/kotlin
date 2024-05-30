@@ -2,6 +2,8 @@ import com.example.Unresolved1;
 import org.example.*;
 import org.another.*;
 
+@Unresolved1()
+@Unresolved2()
 /**
  * public final class C : kotlin/Any {
  *
@@ -12,8 +14,6 @@ import org.another.*;
  * }
  */
 @kotlin.Metadata()
-@Unresolved1()
-@Unresolved2()
 public final class C {
 
     public C() {

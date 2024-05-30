@@ -21,21 +21,21 @@ public final class C implements I {
         super();
     }
 
-    @org.jetbrains.annotations.NotNull()
     @java.lang.Override()
+    @org.jetbrains.annotations.NotNull()
     public java.lang.Integer getValue() {
         return null;
     }
 
-    @org.jetbrains.annotations.NotNull()
     @java.lang.Override()
+    @org.jetbrains.annotations.NotNull()
     public java.lang.Integer foo() {
         return null;
     }
 }
 
-
 ////////////////////
+
 
 /**
  * public abstract interface I : kotlin/Any {

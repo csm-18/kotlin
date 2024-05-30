@@ -1,3 +1,4 @@
+@java.lang.annotation.Retention(value = java.lang.annotation.RetentionPolicy.RUNTIME)
 /**
  * public final annotation class A : kotlin/Annotation {
  *
@@ -8,12 +9,11 @@
  * }
  */
 @kotlin.Metadata()
-@java.lang.annotation.Retention(value = java.lang.annotation.RetentionPolicy.RUNTIME)
 public abstract @interface A {
 }
 
-
 ////////////////////
+
 
 /**
  * package {
@@ -33,18 +33,21 @@ public abstract @interface A {
  */
 @kotlin.Metadata()
 public final class Kt68145Kt {
-    private static final int hidden = 1;
 
+    public Kt68145Kt() {
+        super();
+    }
     @org.jetbrains.annotations.NotNull()
     public static final java.lang.String value = "";
-
-    @A()
-    @java.lang.Deprecated()
-    private static void getHidden$annotations() {
-    }
+    private static final int hidden = 1;
 
     @A()
     @java.lang.Deprecated()
     public static void getValue$annotations() {
+    }
+
+    @A()
+    @java.lang.Deprecated()
+    private static void getHidden$annotations() {
     }
 }
