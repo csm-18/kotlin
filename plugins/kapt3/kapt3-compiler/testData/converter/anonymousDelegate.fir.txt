@@ -1,3 +1,5 @@
+import kotlin.reflect.KProperty;
+
 /**
  * package {
  *
@@ -33,6 +35,8 @@ public final class AnonymousDelegateKt {
 ////////////////////
 
 
+import kotlin.reflect.KProperty;
+
 /**
  * public final class ConcreteDelegate : kotlin/Any {
  *
@@ -61,6 +65,8 @@ public final class ConcreteDelegate {
 
 ////////////////////
 
+
+import kotlin.reflect.KProperty;
 
 /**
  * public final class Test : kotlin/Any {
