@@ -45,8 +45,8 @@ import a.b.ABC;
 public final class Test {
     public Test.MyDate date;
     public java.util.concurrent.TimeUnit timeUnit;
-    public java.lang.Object abc;
-    public java.lang.Object bcd;
+    public a.b.ABC abc;
+    public bcd bcd;
 
     public Test() {
         super();
