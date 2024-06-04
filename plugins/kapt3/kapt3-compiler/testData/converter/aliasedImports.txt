@@ -1,3 +1,7 @@
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+import a.b.ABC;
+
 /**
  * public final class Test : kotlin/Any {
  *
@@ -41,8 +45,8 @@
 public final class Test {
     public Test.MyDate date;
     public java.util.concurrent.TimeUnit timeUnit;
-    public java.lang.Object abc;
-    public java.lang.Object bcd;
+    public a.b.ABC abc;
+    public bcd bcd;
 
     public Test() {
         super();
@@ -67,21 +71,21 @@ public final class Test {
     }
 
     @org.jetbrains.annotations.NotNull()
-    public final java.lang.Object getAbc() {
+    public final a.b.ABC getAbc() {
         return null;
     }
 
     public final void setAbc(@org.jetbrains.annotations.NotNull()
-    java.lang.Object p0) {
+    a.b.ABC p0) {
     }
 
     @org.jetbrains.annotations.NotNull()
-    public final java.lang.Object getBcd() {
+    public final bcd getBcd() {
         return null;
     }
 
     public final void setBcd(@org.jetbrains.annotations.NotNull()
-    java.lang.Object p0) {
+    bcd p0) {
     }
 
     /**
@@ -121,6 +125,10 @@ public final class Test {
 
 ////////////////////
 
+
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
+import a.b.ABC;
 
 /**
  * public final class Test2 : kotlin/Any {
