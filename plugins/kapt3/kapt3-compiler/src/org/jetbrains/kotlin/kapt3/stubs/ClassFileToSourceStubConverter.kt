@@ -41,12 +41,10 @@ import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.transformers.PackageResolutionResult
 import org.jetbrains.kotlin.fir.resolve.transformers.resolveToPackageOrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
+import org.jetbrains.kotlin.ir.declarations.IrMetadataSourceOwner
 import org.jetbrains.kotlin.ir.declarations.name
 import org.jetbrains.kotlin.ir.declarations.path
-import org.jetbrains.kotlin.ir.descriptors.IrBasedClassDescriptor
-import org.jetbrains.kotlin.ir.descriptors.IrBasedFieldDescriptor
-import org.jetbrains.kotlin.ir.descriptors.IrBasedPropertyGetterDescriptor
-import org.jetbrains.kotlin.ir.descriptors.IrBasedPropertySetterDescriptor
+import org.jetbrains.kotlin.ir.descriptors.*
 import org.jetbrains.kotlin.ir.util.fileOrNull
 import org.jetbrains.kotlin.kapt3.KaptContextForStubGeneration
 import org.jetbrains.kotlin.kapt3.base.*
@@ -806,14 +804,7 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
 
                     fieldOrigin?.typeReference
                 },
-                firBasedTypeProvider = type@{
-                    val irField = (kaptContext.origins[field]?.descriptor as? IrBasedFieldDescriptor)?.owner ?: return@type null
-                    val fir = (irField.metadata as? FirMetadataSource.Property)?.fir ?: return@type null
-                    val text = fir.source?.getChild(KtStubElementTypes.TYPE_REFERENCE)?.text ?: return@type null
-                    val firFile = irField.fileOrNull?.let { findFirFile(it) } ?: return@type null
-
-                    FirErrorTypeCorrector(firFile, treeMaker).convertType(text.toString())
-                },
+                firBasedTypeProvider = { lookupAndConvertPropertyType(descriptor) },
                 ifNonError = ::typeFromAsm
             )
         }
@@ -1137,14 +1128,7 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
                             getNonErrorMethodParameterType(
                                 valueParametersFromDescriptor[0],
                                 ktTypeProvider = { psiElement?.getCallableDeclaration()?.typeReference },
-                                firBasedTypeProvider = type@{
-                                    val irSetter = (descriptor as? IrBasedPropertySetterDescriptor)?.owner ?: return@type null
-                                    val fir = (irSetter.metadata as? FirMetadataSource.Function)?.fir ?: return@type null
-                                    val text = fir.source?.getChild(KtStubElementTypes.TYPE_REFERENCE)?.text ?: return@type null
-                                    val firFile = irSetter.fileOrNull?.let { findFirFile(it) } ?: return@type null
-
-                                    FirErrorTypeCorrector(firFile, treeMaker).convertType(text.toString())
-                                }
+                                firBasedTypeProvider = { lookupAndConvertPropertyType(descriptor) }
                             )
                         }
                         else -> lazyType()
@@ -1210,14 +1194,7 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
             },
             firBasedTypeProvider = type@{
                 when (descriptor) {
-                    is PropertyGetterDescriptor -> {
-                        val irGetter = (descriptor as? IrBasedPropertyGetterDescriptor)?.owner ?: return@type null
-                        val fir = (irGetter.metadata as? FirMetadataSource.Function)?.fir ?: return@type null
-                        val text = fir.source?.getChild(KtStubElementTypes.TYPE_REFERENCE)?.text ?: return@type null
-                        val firFile = irGetter.fileOrNull?.let { findFirFile(it) } ?: return@type null
-
-                        FirErrorTypeCorrector(firFile, treeMaker).convertType(text.toString())
-                    }
+                    is PropertyGetterDescriptor -> lookupAndConvertPropertyType(descriptor)
                     else -> null
                 }
             },
@@ -1225,6 +1202,15 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
         )
 
         return Pair(genericSignature, returnType)
+    }
+
+    private fun lookupAndConvertPropertyType(descriptor: DeclarationDescriptor?): JCExpression? {
+        val irCallable = (descriptor as? IrBasedDeclarationDescriptor<*>)?.owner ?: return null
+        val fir = ((irCallable as? IrMetadataSourceOwner)?.metadata as? FirMetadataSource)?.fir ?: return null
+        val text = fir.source?.getChild(KtStubElementTypes.TYPE_REFERENCE)?.text ?: return null
+        val firFile = irCallable.fileOrNull?.let { findFirFile(it) } ?: return null
+
+        return FirErrorTypeCorrector(firFile, treeMaker).convertType(text.toString())
     }
 
     private fun isContinuationParameter(descriptor: ValueParameterDescriptor): Boolean {
