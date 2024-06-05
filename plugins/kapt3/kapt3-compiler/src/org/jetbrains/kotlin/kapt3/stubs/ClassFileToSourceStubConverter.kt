@@ -33,10 +33,12 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.fir.analysis.checkers.classKind
+import org.jetbrains.kotlin.fir.analysis.checkers.toClassLikeSymbol
 import org.jetbrains.kotlin.fir.analysis.getChild
 import org.jetbrains.kotlin.fir.backend.FirMetadataSource
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirResolvedImport
+import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.transformers.PackageResolutionResult
 import org.jetbrains.kotlin.fir.resolve.transformers.resolveToPackageOrClass
@@ -74,10 +76,7 @@ import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
 import org.jetbrains.kotlin.resolve.constants.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
-import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
-import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassOrAny
-import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
+import org.jetbrains.kotlin.resolve.descriptorUtil.*
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin
 import org.jetbrains.kotlin.resolve.jvm.replaceAnonymousTypeWithSuperType
 import org.jetbrains.kotlin.resolve.source.getPsi
@@ -1360,12 +1359,19 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
         }
 
         val ktAnnotation = annotationDescriptor?.source?.getPsi() as? KtAnnotationEntry
+        val firAnnotation = annotationDescriptorToFirAnnotation(annotationDescriptor, ownerDescriptor)
         val annotationFqName = getNonErrorType(
             annotationDescriptor?.type,
             ANNOTATION,
-            { ktAnnotation?.typeReference },
-            { null },
-            {
+            ktTypeProvider = { ktAnnotation?.typeReference },
+            firBasedTypeProvider = type@{
+                val type = firAnnotation?.annotationTypeRef?.source?.text ?: return@type null
+                val firFile = (ownerDescriptor as? IrBasedClassDescriptor)?.owner?.fileOrNull?.let { findFirFile(it) }
+                    ?: return@type null
+
+                FirErrorTypeCorrector(firFile, treeMaker).convertType(type.toString())
+            },
+            ifNonError = {
                 val useSimpleName = '.' in fqName && fqName.substringBeforeLast('.', "") == packageFqName
 
                 when {
@@ -1375,25 +1381,100 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
             }
         )
 
-        val argMapping = ktAnnotation?.calleeExpression
+        val firArgMapping = firAnnotation?.argumentMapping?.mapping ?: emptyMap()
+
+        val argMapping: Map<String, ResolvedValueArgument> = ktAnnotation?.calleeExpression
             ?.getResolvedCall(kaptContext.bindingContext)?.valueArguments
             ?.mapKeys { it.key.name.asString() }
             ?: emptyMap()
 
         val constantValues = pairedListToMap(annotation.values)
 
-        val values = if (argMapping.isNotEmpty()) {
-            argMapping.mapNotNull { (parameterName, arg) ->
-                if (arg is DefaultValueArgument) return@mapNotNull null
-                convertAnnotationArgumentWithName(containingClass, constantValues[parameterName], arg, parameterName)
+        val values = when {
+            firArgMapping.isNotEmpty() -> {
+                firArgMapping.mapNotNull { (parameterName, arg) ->
+                    // TODO: default arguments
+                    convertAnnotationArgumentWithName(
+                        containingClass, constantValues[parameterName.asString()], arg, parameterName.asString(), ownerDescriptor
+                    )
+                }
             }
-        } else {
-            constantValues.mapNotNull { (parameterName, arg) ->
-                convertAnnotationArgumentWithName(containingClass, arg, null, parameterName)
+            argMapping.isNotEmpty() -> {
+                argMapping.mapNotNull { (parameterName, arg) ->
+                    if (arg is DefaultValueArgument) return@mapNotNull null
+                    convertAnnotationArgumentWithName(
+                        containingClass, constantValues[parameterName], arg, parameterName, ownerDescriptor
+                    )
+                }
+            }
+            else -> {
+                constantValues.mapNotNull { (parameterName, arg) ->
+                    convertAnnotationArgumentWithName(
+                        containingClass, arg, null, parameterName, ownerDescriptor
+                    )
+                }
             }
         }
 
         return treeMaker.Annotation(annotationFqName, JavacList.from(values))
+    }
+
+    private fun convertAnnotationArgumentWithName(
+        containingClass: ClassNode,
+        constantValue: Any?,
+        value: FirExpression,
+        name: String,
+        ownerDescriptor: DeclarationDescriptor?,
+    ): JCExpression? {
+        if (!isValidIdentifier(name)) return null
+        if (value !is FirArrayLiteral) return null
+
+        val expr = convertConstantValueArgumentsFir(containingClass, constantValue, value.arguments, ownerDescriptor) ?: return null
+        return treeMaker.Assign(treeMaker.SimpleName(name), expr)
+    }
+
+    private fun convertConstantValueArgumentsFir(
+        containingClass: ClassNode,
+        constantValue: Any?,
+        args: List<FirExpression>,
+        ownerDescriptor: DeclarationDescriptor?,
+    ): JCExpression? {
+        if (constantValue is List<*>) {
+            if (args.size > constantValue.size) {
+                val literalExpression = mapJList(args) { expr ->
+                    if (expr !is FirGetClassCall) return@mapJList null
+                    val firFile = findFirFileByDescriptor(ownerDescriptor) ?: return@mapJList null
+                    val text = expr.argument.source?.text ?: return@mapJList null
+                    val receiver = FirErrorTypeCorrector(firFile, treeMaker).convertType(text.toString())
+                    treeMaker.Select(receiver, treeMaker.name("class")) as JCExpression
+                }
+
+                if (literalExpression.size == args.size) {
+                    return treeMaker.NewArray(null, null, literalExpression)
+                }
+            }
+        }
+
+        return convertLiteralExpression(containingClass, constantValue, ownerDescriptor)
+    }
+
+    private fun findFirFileByDescriptor(descriptor: DeclarationDescriptor?): FirFile? {
+        val irFile = (descriptor as? IrBasedDeclarationDescriptor<*>)?.owner?.fileOrNull ?: return null
+        return findFirFile(irFile)
+    }
+
+    private fun annotationDescriptorToFirAnnotation(
+        annotationDescriptor: AnnotationDescriptor?,
+        owDescriptor: DeclarationDescriptor?,
+    ): FirAnnotationCall? {
+        if (annotationDescriptor?.annotationClass == null) return null
+        val irClass = (owDescriptor as? IrBasedDeclarationDescriptor<*>)?.owner as? IrMetadataSourceOwner ?: return null
+        val firAnnotations = (irClass.metadata as? FirMetadataSource)?.fir ?: return null
+        val session = firAnnotations.moduleData.session
+        return firAnnotations.annotations.find {
+            it.annotationTypeRef.toClassLikeSymbol(session)?.classId ==
+                    annotationDescriptor.annotationClass?.classId
+        } as? FirAnnotationCall
     }
 
     private fun convertAnnotationArgumentWithName(
