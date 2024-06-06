@@ -263,7 +263,8 @@ internal class ClassMemberGenerator(
         initializerExpression: FirExpression?
     ) {
         val irField = backingField ?: return
-        if (!configuration.skipBodies) {
+        val isAnnotationParameter = (irField.parent as? IrClass)?.kind == ClassKind.ANNOTATION_CLASS
+        if (!configuration.skipBodies || isAnnotationParameter) {
             conversionScope.withParent(irField) {
                 declarationStorage.enterScope(this@initializeBackingField.symbol)
                 // NB: initializer can be already converted
