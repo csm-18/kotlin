@@ -152,11 +152,11 @@ class WasmFileCodegenContext(
         wasmFileFragment.closureCallExports.add(exportSignature to exportFunction.getReferenceKey())
     }
 
-    fun addClassAssociatedObjects(klass: IrClassSymbol, associatedObjectsGetters: List<Pair<IrClassSymbol, IrFunctionSymbol>>) {
+    fun addClassAssociatedObjects(klass: IrClassSymbol, associatedObjectsGetters: List<AssociatedObjectBySymbols>) {
         val classAssociatedObjects = ClassAssociatedObjects(
             klass.getReferenceKey(),
-            associatedObjectsGetters.map { (obj, getter) ->
-                AssociatedObject(obj.getReferenceKey(), getter.getReferenceKey())
+            associatedObjectsGetters.map { (obj, getter, isExternal) ->
+                AssociatedObject(obj.getReferenceKey(), getter.getReferenceKey(), isExternal)
             }
         )
         wasmFileFragment.classAssociatedObjectsInstanceGetters.add(classAssociatedObjects)
@@ -168,6 +168,10 @@ class WasmFileCodegenContext(
 
     fun defineTryGetAssociatedObjectFun(func: IrFunctionSymbol) {
         wasmFileFragment.tryGetAssociatedObjectFun = func.getReferenceKey()
+    }
+
+    fun defineJsToKotlinAnyAdapterFun(jsToKotlinAnyAdapterFun: IrSimpleFunctionSymbol) {
+        wasmFileFragment.jsToKotlinAnyAdapterFun = jsToKotlinAnyAdapterFun.getReferenceKey()
     }
 }
 
@@ -227,3 +231,5 @@ class WasmModuleTypeTransformer(
         return with(typeTransformer) { irType.toWasmBlockResultType() }
     }
 }
+
+data class AssociatedObjectBySymbols(val klass: IrClassSymbol, val getter: IrFunctionSymbol, val isExternal: Boolean)
