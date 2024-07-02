@@ -38,34 +38,46 @@ fun IrBuilderWithScope.irDiagramString(
     variables: List<IrTemporaryVariable>,
 ): IrExpression {
     val callInfo = sourceFile.getSourceRangeInfo(call)
-    val callIndent = callInfo.startColumnNumber
+    val indent = callInfo.startColumnNumber
 
-    val stackValues = variables.map { it.toValueDisplay(callIndent, callInfo) }
-
-    val valuesByRow = stackValues.groupBy { it.row }
-    val rows = sourceFile.getText(callInfo)
-        .replace("\n" + " ".repeat(callIndent), "\n") // Remove additional indentation
+    // Get call source string starting at the very beginning of the first line.
+    // This is so multiline calls all start from the same column offset.
+    val rows = sourceFile.getText(callInfo.startOffset - indent, callInfo.endOffset)
         .split("\n")
+
+    val valuesByRow = variables
+        .map { it.toValueDisplay(callInfo) }
+        .sortedBy { it.indent }
+        .groupBy { it.row }
 
     return irConcat().apply {
         if (prefix != null) addArgument(prefix)
 
         for ((row, rowSource) in rows.withIndex()) {
-            val rowValues = valuesByRow[row]?.let { values -> values.sortedBy { it.indent } } ?: emptyList()
-            val indentations = rowValues.map { it.indent }
+            addArgument(
+                irString {
+                    appendLine()
+                    append(rowSource.substring(minOf(indent, rowSource.length)))
+                },
+            )
+
+            val rowValues = valuesByRow[row] ?: continue
+
+            val lineTemplate = buildString {
+                val indentations = rowValues.mapTo(mutableSetOf()) { it.indent }
+                for ((i, c) in rowSource.withIndex()) {
+                    when {
+                        i in indentations -> append('|')
+                        c != ' ' && c != '\t' -> append(' ')
+                        else -> append(c)
+                    }
+                }
+            }
 
             addArgument(
                 irString {
                     appendLine()
-                    append(rowSource)
-                    if (indentations.isNotEmpty()) {
-                        appendLine()
-                        var last = -1
-                        for (i in indentations) {
-                            if (i > last) indent(i - last - 1).append("|")
-                            last = i
-                        }
-                    }
+                    append(lineTemplate.substring(indent, rowValues.last().indent + 1))
                 },
             )
 
@@ -73,13 +85,7 @@ fun IrBuilderWithScope.irDiagramString(
                 addArgument(
                     irString {
                         appendLine()
-                        var last = -1
-                        for (i in indentations) {
-                            if (i == tmp.indent) break
-                            if (i > last) indent(i - last - 1).append("|")
-                            last = i
-                        }
-                        indent(tmp.indent - last - 1)
+                        append(lineTemplate.substring(indent, tmp.indent))
                     },
                 )
                 addArgument(irGet(tmp.value))
@@ -98,17 +104,15 @@ private data class ValueDisplay(
     val value: IrVariable,
     val indent: Int,
     val row: Int,
-    val source: String,
 )
 
 private fun IrTemporaryVariable.toValueDisplay(
-    callIndent: Int,
     originalInfo: SourceRangeInfo,
 ): ValueDisplay {
-    var indent = sourceRangeInfo.startColumnNumber - callIndent
+    var indent = sourceRangeInfo.startColumnNumber
     var row = sourceRangeInfo.startLineNumber - originalInfo.startLineNumber
 
-    val source = text.replace("\n" + " ".repeat(callIndent), "\n") // Remove additional indentation
+    val source = text
     val columnOffset = findDisplayOffset(original, sourceRangeInfo, source)
 
     val prefix = source.substring(0, columnOffset)
@@ -120,7 +124,7 @@ private fun IrTemporaryVariable.toValueDisplay(
         indent = columnOffset - (prefix.lastIndexOf('\n') + 1)
     }
 
-    return ValueDisplay(temporary, indent, row, source)
+    return ValueDisplay(temporary, indent, row)
 }
 
 /**
@@ -256,9 +260,4 @@ private fun IrMemberAccessExpression<*>.simpleBinaryOperatorLhs(): IrExpression?
             ?: extensionReceiver
             ?: getValueArgument(0).takeIf { (symbol.owner as? IrSimpleFunction)?.origin == IrBuiltIns.BUILTIN_OPERATOR }
     }
-}
-
-fun StringBuilder.indent(indentation: Int): StringBuilder {
-    repeat(indentation) { append(" ") }
-    return this
 }
