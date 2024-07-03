@@ -36,8 +36,8 @@ import org.jetbrains.kotlin.parcelize.ParcelizeNames.WRITE_TO_PARCEL_NAME
 class ParcelizeIrTransformer(
     context: IrPluginContext,
     androidSymbols: AndroidSymbols,
-    parcelizeAnnotations: List<FqName>
-) : ParcelizeIrTransformerBase(context, androidSymbols, parcelizeAnnotations) {
+    additionalAnnotations: AdditionalAnnotations<FqName>,
+) : ParcelizeIrTransformerBase(context, androidSymbols, additionalAnnotations) {
     private val symbolMap = mutableMapOf<IrSimpleFunctionSymbol, IrSimpleFunctionSymbol>()
 
     fun transform(moduleFragment: IrModuleFragment) {
@@ -91,7 +91,7 @@ class ParcelizeIrTransformer(
 
         // Sealed classes can be annotated with `@Parcelize`, but that only implies that we
         // should process their immediate subclasses.
-        if (!declaration.isParcelize(parcelizeAnnotations) || declaration.modality == Modality.SEALED)
+        if (!declaration.isParcelize(additionalAnnotations.parcelize) || declaration.modality == Modality.SEALED)
             return
 
         val parcelableProperties = declaration.parcelableProperties

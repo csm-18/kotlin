@@ -17,17 +17,21 @@ import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.toAnnotationClassId
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.parcelize.AdditionalAnnotations
 import org.jetbrains.kotlin.parcelize.ParcelizeNames
 
-class FirParcelizeConstructorChecker(private val parcelizeAnnotations: List<ClassId>) : FirConstructorChecker(MppCheckerKind.Platform) {
+class FirParcelizeConstructorChecker(
+    private val additionalAnnotations: AdditionalAnnotations<ClassId>
+) : FirConstructorChecker(MppCheckerKind.Platform) {
     override fun check(declaration: FirConstructor, context: CheckerContext, reporter: DiagnosticReporter) {
         if (!declaration.isPrimary) return
         val source = declaration.source ?: return
         if (source.kind == KtFakeSourceElementKind.ImplicitConstructor) return
         val containingClass = context.containingDeclarations.last() as? FirRegularClass ?: return
         val containingClassSymbol = containingClass.symbol
-        if (!containingClassSymbol.isParcelize(context.session, parcelizeAnnotations)
-            || containingClass.hasCustomParceler(context.session)) {
+        if (!containingClassSymbol.isParcelize(context.session, additionalAnnotations.parcelize)
+            || containingClass.hasCustomParceler(context.session)
+        ) {
             return
         }
 
@@ -44,7 +48,9 @@ class FirParcelizeConstructorChecker(private val parcelizeAnnotations: List<Clas
                 }
                 if (valueParameter.defaultValue == null) {
                     val illegalAnnotation = valueParameter.correspondingProperty?.annotations?.firstOrNull {
-                        it.toAnnotationClassId(context.session) in ParcelizeNames.IGNORED_ON_PARCEL_CLASS_IDS
+                        val classId = it.toAnnotationClassId(context.session)
+                        classId in ParcelizeNames.IGNORED_ON_PARCEL_CLASS_IDS ||
+                                classId in additionalAnnotations.ignoredOnParcel
                     }
                     if (illegalAnnotation != null) {
                         reporter.reportOn(

@@ -199,6 +199,12 @@ public class ParcelizeIrBoxTestGenerated extends AbstractParcelizeIrBoxTest {
   }
 
   @Test
+  @TestMetadata("ignoredOnValueAliasTrigger.kt")
+  public void testIgnoredOnValueAliasTrigger() {
+    runTest("plugins/parcelize/parcelize-compiler/testData/box/ignoredOnValueAliasTrigger.kt");
+  }
+
+  @Test
   @TestMetadata("intArray.kt")
   public void testIntArray() {
     runTest("plugins/parcelize/parcelize-compiler/testData/box/intArray.kt");
@@ -346,6 +352,12 @@ public class ParcelizeIrBoxTestGenerated extends AbstractParcelizeIrBoxTest {
   @TestMetadata("maps.kt")
   public void testMaps() {
     runTest("plugins/parcelize/parcelize-compiler/testData/box/maps.kt");
+  }
+
+  @Test
+  @TestMetadata("mppAliasedIngoredOnParcel.kt")
+  public void testMppAliasedIngoredOnParcel() {
+    runTest("plugins/parcelize/parcelize-compiler/testData/box/mppAliasedIngoredOnParcel.kt");
   }
 
   @Test

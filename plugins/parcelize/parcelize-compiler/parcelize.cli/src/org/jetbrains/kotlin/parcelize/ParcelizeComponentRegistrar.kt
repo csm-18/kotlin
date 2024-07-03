@@ -24,25 +24,42 @@ class ParcelizeComponentRegistrar : CompilerPluginRegistrar() {
     companion object {
         fun registerParcelizeComponents(
             extensionStorage: ExtensionStorage,
-            additionalAnnotation: List<String>,
-            useFir: Boolean
+            additionalParcelizeAnnotation: List<String>,
+            additionalIgnoredOnParcelAliases: List<String>,
+            useFir: Boolean,
         ) = with(extensionStorage) {
             val parcelizeAnnotations = ParcelizeNames.PARCELIZE_CLASS_FQ_NAMES.toMutableList()
-            additionalAnnotation.mapTo(parcelizeAnnotations) { FqName(it) }
+            val ignoredOnParcelAliases = ParcelizeNames.IGNORED_ON_PARCEL_FQ_NAMES.toMutableList()
+            additionalParcelizeAnnotation.mapTo(parcelizeAnnotations) { FqName(it) }
+            additionalIgnoredOnParcelAliases.mapTo(ignoredOnParcelAliases) { FqName(it) }
+            val additionalAnnotations = AdditionalAnnotations(
+                parcelize = parcelizeAnnotations,
+                ignoredOnParcel = ignoredOnParcelAliases,
+            )
             if (useFir) {
-                IrGenerationExtension.registerExtension(ParcelizeFirIrGeneratorExtension(parcelizeAnnotations))
+                IrGenerationExtension.registerExtension(ParcelizeFirIrGeneratorExtension(additionalAnnotations))
             } else {
-                IrGenerationExtension.registerExtension(ParcelizeIrGeneratorExtension(parcelizeAnnotations))
+                IrGenerationExtension.registerExtension(ParcelizeIrGeneratorExtension(additionalAnnotations))
             }
-            SyntheticResolveExtension.registerExtension(ParcelizeResolveExtension(parcelizeAnnotations))
-            StorageComponentContainerContributor.registerExtension(ParcelizeDeclarationCheckerComponentContainerContributor(parcelizeAnnotations))
-            FirExtensionRegistrarAdapter.registerExtension(FirParcelizeExtensionRegistrar(parcelizeAnnotations))
+            SyntheticResolveExtension.registerExtension(ParcelizeResolveExtension(additionalAnnotations.parcelize))
+            StorageComponentContainerContributor.registerExtension(
+                ParcelizeDeclarationCheckerComponentContainerContributor(
+                    additionalAnnotations
+                )
+            )
+            FirExtensionRegistrarAdapter.registerExtension(FirParcelizeExtensionRegistrar(additionalAnnotations))
         }
     }
 
     override fun ExtensionStorage.registerExtensions(configuration: CompilerConfiguration) {
         val additionalAnnotation = configuration.get(ParcelizeConfigurationKeys.ADDITIONAL_ANNOTATION) ?: emptyList()
-        registerParcelizeComponents(this, additionalAnnotation, configuration.getBoolean(CommonConfigurationKeys.USE_FIR))
+        val additionalIgnoredOnParcelAliases = configuration.get(ParcelizeConfigurationKeys.IGNORED_ON_PARCEL_ALIAS) ?: emptyList()
+        registerParcelizeComponents(
+            this,
+            additionalAnnotation,
+            additionalIgnoredOnParcelAliases,
+            configuration.getBoolean(CommonConfigurationKeys.USE_FIR)
+        )
     }
 
     override val supportsK2: Boolean
@@ -50,7 +67,7 @@ class ParcelizeComponentRegistrar : CompilerPluginRegistrar() {
 }
 
 class ParcelizeDeclarationCheckerComponentContainerContributor(
-    private val parcelizeAnnotations: List<FqName>
+    private val additionalAnnotations: AdditionalAnnotations<FqName>,
 ) : StorageComponentContainerContributor {
     override fun registerModuleComponents(
         container: StorageComponentContainer,
@@ -58,8 +75,8 @@ class ParcelizeDeclarationCheckerComponentContainerContributor(
         moduleDescriptor: ModuleDescriptor,
     ) {
         if (platform.isJvm()) {
-            container.useInstance(ParcelizeDeclarationChecker(parcelizeAnnotations))
-            container.useInstance(ParcelizeAnnotationChecker(parcelizeAnnotations))
+            container.useInstance(ParcelizeDeclarationChecker(additionalAnnotations.parcelize))
+            container.useInstance(ParcelizeAnnotationChecker(additionalAnnotations))
         }
     }
 }

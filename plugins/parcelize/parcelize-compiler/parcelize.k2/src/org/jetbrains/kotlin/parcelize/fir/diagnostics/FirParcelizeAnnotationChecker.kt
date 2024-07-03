@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.fir.resolve.getSuperTypes
 import org.jetbrains.kotlin.fir.resolve.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.parcelize.AdditionalAnnotations
 import org.jetbrains.kotlin.parcelize.ParcelizeNames
 import org.jetbrains.kotlin.parcelize.ParcelizeNames.DEPRECATED_RUNTIME_PACKAGE
 import org.jetbrains.kotlin.parcelize.ParcelizeNames.IGNORED_ON_PARCEL_CLASS_IDS
@@ -28,7 +29,9 @@ import org.jetbrains.kotlin.parcelize.ParcelizeNames.TYPE_PARCELER_CLASS_IDS
 import org.jetbrains.kotlin.parcelize.ParcelizeNames.WRITE_WITH_CLASS_IDS
 
 // TODO: extract common checker for expect interfaces
-class FirParcelizeAnnotationChecker(private val parcelizeAnnotationClassIds: List<ClassId>) :
+class FirParcelizeAnnotationChecker(
+    private val additionalAnnotations: AdditionalAnnotations<ClassId>,
+) :
     FirAnnotationCallChecker(MppCheckerKind.Platform) {
     override fun check(expression: FirAnnotationCall, context: CheckerContext, reporter: DiagnosticReporter) {
         val annotationType = expression.annotationTypeRef.coneType.fullyExpandedType(context.session) as? ConeClassLikeType ?: return
@@ -44,10 +47,10 @@ class FirParcelizeAnnotationChecker(private val parcelizeAnnotationClassIds: Lis
                     checkWriteWithUsage(expression, context, reporter)
                 }
             }
-            in IGNORED_ON_PARCEL_CLASS_IDS -> {
+            in additionalAnnotations.ignoredOnParcel, in IGNORED_ON_PARCEL_CLASS_IDS -> {
                 checkDeprecatedAnnotations(expression, annotationClassId, context, reporter, isForbidden = false)
             }
-            in parcelizeAnnotationClassIds, in RAW_VALUE_ANNOTATION_CLASS_IDS -> {
+            in additionalAnnotations.parcelize, in RAW_VALUE_ANNOTATION_CLASS_IDS -> {
                 checkDeprecatedAnnotations(expression, annotationClassId, context, reporter, isForbidden = false)
             }
         }
@@ -58,7 +61,7 @@ class FirParcelizeAnnotationChecker(private val parcelizeAnnotationClassIds: Lis
         annotationClassId: ClassId,
         context: CheckerContext,
         reporter: DiagnosticReporter,
-        isForbidden: Boolean
+        isForbidden: Boolean,
     ): Boolean {
         if (annotationClassId.packageFqName == DEPRECATED_RUNTIME_PACKAGE) {
             val factory = if (isForbidden) KtErrorsParcelize.FORBIDDEN_DEPRECATED_ANNOTATION else KtErrorsParcelize.DEPRECATED_ANNOTATION
@@ -145,10 +148,14 @@ class FirParcelizeAnnotationChecker(private val parcelizeAnnotationClassIds: Lis
         }
     }
 
-    private fun checkIfTheContainingClassIsParcelize(annotationCall: FirAnnotationCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun checkIfTheContainingClassIsParcelize(
+        annotationCall: FirAnnotationCall,
+        context: CheckerContext,
+        reporter: DiagnosticReporter,
+    ) {
         val enclosingClass = context.findClosestClassOrObject() ?: return
 
-        if (!enclosingClass.symbol.isParcelize(context.session, parcelizeAnnotationClassIds)) {
+        if (!enclosingClass.symbol.isParcelize(context.session, additionalAnnotations.parcelize)) {
             val reportElement = annotationCall.calleeReference.source ?: annotationCall.source
             reporter.reportOn(reportElement, KtErrorsParcelize.CLASS_SHOULD_BE_PARCELIZE, enclosingClass.symbol, context)
         }

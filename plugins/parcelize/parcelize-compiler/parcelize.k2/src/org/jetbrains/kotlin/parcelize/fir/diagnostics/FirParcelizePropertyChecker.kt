@@ -35,18 +35,20 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.visibilityChecker
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.parcelize.AdditionalAnnotations
 import org.jetbrains.kotlin.parcelize.BuiltinParcelableTypes
 import org.jetbrains.kotlin.parcelize.ParcelizeNames
 import org.jetbrains.kotlin.parcelize.ParcelizeNames.CREATOR_NAME
 import org.jetbrains.kotlin.parcelize.ParcelizeNames.IGNORED_ON_PARCEL_CLASS_IDS
 import org.jetbrains.kotlin.parcelize.ParcelizeNames.PARCELER_ID
 
-class FirParcelizePropertyChecker(private val parcelizeAnnotations: List<ClassId>) : FirPropertyChecker(MppCheckerKind.Platform) {
+class FirParcelizePropertyChecker(private val additionalAnnotations: AdditionalAnnotations<ClassId>) :
+    FirPropertyChecker(MppCheckerKind.Platform) {
     override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
         val session = context.session
         val containingClassSymbol = declaration.dispatchReceiverType?.toRegularClassSymbol(session) ?: return
 
-        if (containingClassSymbol.isParcelize(session, parcelizeAnnotations)) {
+        if (containingClassSymbol.isParcelize(session, additionalAnnotations.parcelize)) {
             val fromPrimaryConstructor = declaration.fromPrimaryConstructor ?: false
             if (
                 !fromPrimaryConstructor &&
@@ -63,7 +65,7 @@ class FirParcelizePropertyChecker(private val parcelizeAnnotations: List<ClassId
 
         if (declaration.name == CREATOR_NAME && containingClassSymbol.isCompanion && declaration.hasJvmFieldAnnotation(session)) {
             val outerClass = context.containingDeclarations.asReversed().getOrNull(1) as? FirRegularClass
-            if (outerClass != null && outerClass.symbol.isParcelize(session, parcelizeAnnotations)) {
+            if (outerClass != null && outerClass.symbol.isParcelize(session, additionalAnnotations.parcelize)) {
                 reporter.reportOn(declaration.source, KtErrorsParcelize.CREATOR_DEFINITION_IS_NOT_ALLOWED, context)
             }
         }
@@ -73,7 +75,7 @@ class FirParcelizePropertyChecker(private val parcelizeAnnotations: List<ClassId
         property: FirProperty,
         containingClassSymbol: FirRegularClassSymbol,
         context: CheckerContext,
-        reporter: DiagnosticReporter
+        reporter: DiagnosticReporter,
     ) {
         val type = property.returnTypeRef.coneType.fullyExpandedType(context.session)
         if (type is ConeErrorType || containingClassSymbol.hasCustomParceler(context.session) || property.hasIgnoredOnParcel()) {
@@ -220,7 +222,8 @@ class FirParcelizePropertyChecker(private val parcelizeAnnotations: List<ClassId
 
     private fun List<FirAnnotation>.hasIgnoredOnParcel(): Boolean {
         return this.any {
-            if (it.annotationTypeRef.coneType.classId !in IGNORED_ON_PARCEL_CLASS_IDS) return@any false
+            val classId = it.annotationTypeRef.coneType.classId
+            if (classId !in IGNORED_ON_PARCEL_CLASS_IDS && classId !in additionalAnnotations.ignoredOnParcel) return@any false
             val target = it.useSiteTarget
             target == null || target == AnnotationUseSiteTarget.PROPERTY || target == AnnotationUseSiteTarget.PROPERTY_GETTER
         }

@@ -23,17 +23,26 @@ class ParcelizeCommandLineProcessor : CommandLineProcessor {
                 required = false,
                 allowMultipleOccurrences = true
             )
+        val IGNORED_ON_PARCEL_ALIAS_OPTION: CliOption =
+            CliOption(
+                "ignoredOnParcelAlias",
+                "<fully qualified name>",
+                "Additional annotation that should be treated like IgnoredOnParcel.",
+                required = false,
+                allowMultipleOccurrences = true
+            )
     }
 
     override val pluginId: String
         get() = COMPILER_PLUGIN_ID
 
     override val pluginOptions: Collection<AbstractCliOption>
-        get() = listOf(ADDITIONAL_ANNOTATION_OPTION)
+        get() = listOf(ADDITIONAL_ANNOTATION_OPTION, IGNORED_ON_PARCEL_ALIAS_OPTION)
 
     override fun processOption(option: AbstractCliOption, value: String, configuration: CompilerConfiguration) {
         when (option) {
             ADDITIONAL_ANNOTATION_OPTION -> configuration.appendList(ParcelizeConfigurationKeys.ADDITIONAL_ANNOTATION, value)
+            IGNORED_ON_PARCEL_ALIAS_OPTION -> configuration.appendList(ParcelizeConfigurationKeys.IGNORED_ON_PARCEL_ALIAS, value)
             else -> throw CliOptionProcessingException("Unknown option: ${option.optionName}")
         }
     }

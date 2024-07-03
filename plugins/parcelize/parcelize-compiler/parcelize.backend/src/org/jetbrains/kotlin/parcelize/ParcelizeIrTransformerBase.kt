@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.parcelize.serializers.ParcelizeExtensionBase
 abstract class ParcelizeIrTransformerBase(
     protected val context: IrPluginContext,
     protected val androidSymbols: AndroidSymbols,
-    protected val parcelizeAnnotations: List<FqName>,
+    protected val additionalAnnotations: AdditionalAnnotations<FqName>,
 ) : ParcelizeExtensionBase, IrElementVisitorVoid {
     private val irFactory: IrFactory = IrFactoryImpl
 
@@ -171,7 +171,7 @@ abstract class ParcelizeIrTransformerBase(
         val parceler by lazy(parcelerThunk)
     }
 
-    private val serializerFactory = IrParcelSerializerFactory(androidSymbols, parcelizeAnnotations)
+    private val serializerFactory = IrParcelSerializerFactory(androidSymbols, additionalAnnotations.parcelize)
 
     protected val IrClass.parcelableProperties: List<ParcelableProperty>
         get() {
@@ -181,15 +181,12 @@ abstract class ParcelizeIrTransformerBase(
             val topLevelScope = getParcelerScope()
             return constructor.valueParameters.mapIndexedNotNull { index, parameter ->
                 val property = properties.firstOrNull { it.name == parameter.name }
-                if (property == null || property.hasAnyAnnotation(IGNORED_ON_PARCEL_FQ_NAMES)) {
+                if (property == null || property.hasAnyAnnotation(additionalAnnotations.ignoredOnParcel)) {
                     null
                 } else {
                     val localScope = property.getParcelerScope(topLevelScope)
-                    val backingField = property.backingField
-                    if (backingField == null) {
-                        null
-                    } else {
-                        ParcelableProperty(backingField, index) {
+                    property.backingField?.let {
+                        ParcelableProperty(it, index) {
                             serializerFactory.get(parameter.type, parcelizeType = defaultType, scope = localScope)
                         }
                     }
