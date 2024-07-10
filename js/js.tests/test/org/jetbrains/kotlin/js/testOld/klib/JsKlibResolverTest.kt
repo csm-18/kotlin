@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.js.testOld.klib
 
+import junit.framework.TestCase
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.js.K2JsIrCompiler
 import org.jetbrains.kotlin.test.TestCaseWithTmpdir
@@ -24,13 +25,12 @@ class JsKlibResolverTest : TestCaseWithTmpdir() {
 
         compileKlib(
             sourceFile = testDataDir.resolve("lib1.kt"),
-            dependency = null,
             outputFile = lib1V1
         ).assertSuccess() // Should compile successfully.
 
         compileKlib(
             sourceFile = testDataDir.resolve("lib2.kt"),
-            dependency = lib1V1,
+            dependencies = arrayOf(lib1V1),
             outputFile = createKlibDir("lib2", 1)
         ).assertSuccess() // Should compile successfully.
 
@@ -41,7 +41,7 @@ class JsKlibResolverTest : TestCaseWithTmpdir() {
 
         val result = compileKlib(
             sourceFile = testDataDir.resolve("lib2.kt"),
-            dependency = lib1V2,
+            dependencies = arrayOf(lib1V2),
             outputFile = createKlibDir("lib2", 2)
         )
 
@@ -50,13 +50,44 @@ class JsKlibResolverTest : TestCaseWithTmpdir() {
         assertCompilerOutputHasKlibResolverIncompatibleAbiMessages(JUnit4Assertions, result.output, missingLibrary = "/v2/lib1", tmpdir)
     }
 
+    fun testWarningAboutDuplicatedUniqueNames() {
+        val testDataDir = File("compiler/testData/klib/resolve/duplicate-unique-name")
+        val DUPLICATED_UNIQUE_NAME = "DUPLICATED_UNIQUE_NAME"
+
+        val dirA = createKlibDir(DUPLICATED_UNIQUE_NAME, 1)
+        compileKlib(
+            sourceFile = testDataDir.resolve("a.kt"),
+            outputFile = dirA
+        ).assertSuccess() // Should compile successfully.
+
+        val dirB = createKlibDir(DUPLICATED_UNIQUE_NAME, 2)
+        compileKlib(
+            sourceFile = testDataDir.resolve("b.kt"),
+            outputFile = dirB
+        ).assertSuccess() // Should compile successfully.
+
+        val result = compileKlib(
+            sourceFile = testDataDir.resolve("c.kt"),
+            dependencies = arrayOf(dirA, dirB),
+            outputFile = createKlibDir("c", 1),
+        ).also { it.assertFailure() }  // Should not compile successfully.
+
+        val compileroOutputLines = result.output.lines()
+        TestCase.assertTrue(compileroOutputLines.any {
+            it.startsWith("warning: KLIB resolver: The same 'unique_name=$DUPLICATED_UNIQUE_NAME' found in more than one library")
+        })
+        TestCase.assertTrue(compileroOutputLines.any {
+            it.contains("error: unresolved reference")
+        })
+    }
+
     private fun createKlibDir(name: String, version: Int): File =
         tmpdir.resolve("v$version").resolve(name).apply(File::mkdirs)
 
-    private fun compileKlib(sourceFile: File, dependency: File?, outputFile: File): CompilationResult {
+    private fun compileKlib(sourceFile: File, dependencies: Array<File> = emptyArray(), outputFile: File): CompilationResult {
         val libraries = listOfNotNull(
             StandardLibrariesPathProviderForKotlinProject.fullJsStdlib(),
-            dependency
+            *dependencies
         ).joinToString(File.pathSeparator) { it.absolutePath }
 
         val args = arrayOf(
