@@ -73,6 +73,9 @@ where advanced options include:
   -Xdisable-default-scripting-plugin
                              Don't enable the scripting plugin by default.
   -Xdisable-phases           Disable backend phases.
+  -Xklib-disallow-duplicated-unique-names
+                             Instruct the compiler to ignore all subsequent KLIBs having the same `unique_name` that has already been seen.
+                             Note: There are no guarantees about the order of KLIBs inspection. Please, use with caution.
   -Xdont-warn-on-error-suppression
                              Don't report warnings when errors are suppressed. This only affects K2.
   -Xdump-directory           Dump the backend state into this directory.

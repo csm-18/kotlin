@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.backend.konan
 
 import org.jetbrains.kotlin.cli.common.messages.getLogger
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.KlibConfigurationKeys
 import org.jetbrains.kotlin.konan.file.File
 import org.jetbrains.kotlin.konan.library.defaultResolver
 import org.jetbrains.kotlin.konan.target.Distribution
@@ -51,7 +52,8 @@ class KonanLibrariesResolveSupport(
                 unresolvedLibraries + additionalLibraryFiles.map { RequiredUnresolvedLibrary(it.absolutePath) },
                 noStdLib = configuration.getBoolean(KonanConfigKeys.NOSTDLIB),
                 noDefaultLibs = configuration.getBoolean(KonanConfigKeys.NODEFAULTLIBS),
-                noEndorsedLibs = configuration.getBoolean(KonanConfigKeys.NOENDORSEDLIBS)
+                noEndorsedLibs = configuration.getBoolean(KonanConfigKeys.NOENDORSEDLIBS),
+                disallowDuplicatedUniqueNames = configuration.getBoolean(KlibConfigurationKeys.DISALLOW_DUPLICATED_UNIQUE_NAMES),
         )
     }
 

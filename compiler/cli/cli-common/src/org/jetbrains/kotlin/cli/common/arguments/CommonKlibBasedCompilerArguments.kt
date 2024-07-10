@@ -64,4 +64,15 @@ abstract class CommonKlibBasedCompilerArguments : CommonCompilerArguments() {
             checkFrozen()
             field = value
         }
+
+    @Argument(
+        value = "-Xklib-disallow-duplicated-unique-names",
+        description = "Instruct the compiler to ignore all subsequent KLIBs having the same `unique_name` that has already been seen.\n" +
+                "Note: There are no guarantees about the order of KLIBs inspection. Please, use with caution."
+    )
+    var disallowDuplicatedUniqueNames = false
+        set(value) {
+            checkFrozen()
+            field = value
+        }
 }

@@ -231,6 +231,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         configuration.put(KlibConfigurationKeys.PRODUCE_KLIB_SIGNATURES_CLASH_CHECKS, arguments.enableSignatureClashChecks)
 
         configuration.put(KlibConfigurationKeys.EXPERIMENTAL_DOUBLE_INLINING, arguments.experimentalDoubleInlining)
+        configuration.put(KlibConfigurationKeys.DISALLOW_DUPLICATED_UNIQUE_NAMES, arguments.disallowDuplicatedUniqueNames)
 
         // ----
 

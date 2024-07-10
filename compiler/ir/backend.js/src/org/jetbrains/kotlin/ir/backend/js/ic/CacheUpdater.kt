@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.backend.common.serialization.IrInterningService
 import org.jetbrains.kotlin.backend.common.serialization.cityHash64String
 import org.jetbrains.kotlin.backend.common.toLogger
 import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.KlibConfigurationKeys
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.JsGenerationGranularity
@@ -117,7 +118,8 @@ class CacheUpdater(
             val allResolvedDependencies = CommonKLibResolver.resolve(
                 allModules,
                 compilerConfiguration.messageCollector.toLogger(),
-                zipAccessor
+                zipAccessor,
+                disallowDuplicatedUniqueNames = compilerConfiguration.get(KlibConfigurationKeys.DISALLOW_DUPLICATED_UNIQUE_NAMES) == true,
             )
 
             val libraries = allResolvedDependencies.getFullList(TopologicalLibraryOrder).let { resolvedLibraries ->

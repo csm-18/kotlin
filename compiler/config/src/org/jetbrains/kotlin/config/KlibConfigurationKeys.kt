@@ -25,4 +25,9 @@ object KlibConfigurationKeys {
     @JvmField
     val SYNTHETIC_ACCESSORS_DUMP_DIR: CompilerConfigurationKey<String?> =
         CompilerConfigurationKey.create("Path to a directory to dump synthetic accessors and their use sites")
+
+    @JvmField
+    val DISALLOW_DUPLICATED_UNIQUE_NAMES: CompilerConfigurationKey<Boolean> =
+        CompilerConfigurationKey.create("Instruct the compiler to ignore all subsequent KLIBs having the same `unique_name` that has already been seen.\n" +
+                    "Note: There are no guarantees about the order of KLIBs inspection. Please, use with caution.")
 }
