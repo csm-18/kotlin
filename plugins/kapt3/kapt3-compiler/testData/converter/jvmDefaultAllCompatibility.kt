@@ -1,6 +1,5 @@
-// FIR_BLOCKED: KT-59287
 // JVM_DEFAULT_MODE: all-compatibility
-// EXPECTED_ERROR: (kotlin:16:13) modifier private not allowed here
+// EXPECTED_ERROR: (kotlin:15:13) modifier private not allowed here
 
 interface Foo {
     fun foo() {
