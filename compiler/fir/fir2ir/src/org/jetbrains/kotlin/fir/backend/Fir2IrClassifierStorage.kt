@@ -196,15 +196,10 @@ class Fir2IrClassifierStorage(
      *
      * But on the first FIR2IR stage this API should not be used
      */
-    @OptIn(UnsafeDuringIrConstructionAPI::class)
     fun getIrClass(firClass: FirClass): IrClass {
         getCachedIrClass(firClass)?.let { return it }
         if (firClass is FirAnonymousObject || firClass is FirRegularClass && firClass.visibility == Visibilities.Local) {
-            return if (configuration.skipBodies) {
-                builtins.anyClass.owner
-            } else {
-                createAndCacheLocalIrClassOnTheFly(firClass)
-            }
+            return createAndCacheLocalIrClassOnTheFly(firClass)
         }
         require(firClass is FirRegularClass)
         val symbol = createClassSymbol()

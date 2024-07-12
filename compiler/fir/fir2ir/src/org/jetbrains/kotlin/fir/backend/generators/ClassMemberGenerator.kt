@@ -263,11 +263,7 @@ internal class ClassMemberGenerator(
         initializerExpression: FirExpression?
     ) {
         val irField = backingField ?: return
-        if (configuration.skipBodies) {
-            irField.initializer = irFactory.createExpressionBody(
-                startOffset, endOffset, IrConstImpl.defaultValueForType(startOffset, endOffset, irField.type)
-            )
-        } else {
+        if (!configuration.skipBodies) {
             conversionScope.withParent(irField) {
                 declarationStorage.enterScope(this@initializeBackingField.symbol)
                 // NB: initializer can be already converted
