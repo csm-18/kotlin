@@ -3,6 +3,7 @@ package kapt;
 import java.util.Collections.unmodifiableCollection;
 import kapt.StaticMethod.of;
 import kapt.StaticMethod.of2;
+import my.lib.func;
 
 /**
  * public final class kapt/StaticImport : kotlin/Any {

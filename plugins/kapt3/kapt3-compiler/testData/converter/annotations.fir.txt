@@ -223,7 +223,7 @@ public final class TestAnno {
 public final class TestAnno2 {
     @Anno3(value = "field")
     @org.jetbrains.annotations.NotNull()
-    private java.lang.String b;
+    private java.lang.String b = "property initializer";
 
     public TestAnno2() {
         super();

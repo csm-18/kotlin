@@ -74,7 +74,7 @@ public abstract interface FooComponent {
  */
 @kotlin.Metadata()
 public final class JvmStaticTest {
-    private static final int one = 0;
+    private static final int one = 1;
     public static final int two = 2;
     public static final char c = 'C';
     public final byte three = 0;

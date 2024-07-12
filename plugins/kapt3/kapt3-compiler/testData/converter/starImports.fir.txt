@@ -58,14 +58,14 @@ public final class UnresolvedKt {
         super();
     }
     @org.jetbrains.annotations.NotNull()
-    private static java.lang.Object base65;
+    private static Base65 base65;
 
     @org.jetbrains.annotations.NotNull()
-    public static final java.lang.Object getBase65() {
+    public static final Base65 getBase65() {
         return null;
     }
 
     public static final void setBase65(@org.jetbrains.annotations.NotNull()
-    java.lang.Object p0) {
+    Base65 p0) {
     }
 }

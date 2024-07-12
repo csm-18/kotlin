@@ -56,6 +56,9 @@ public enum EnumError {
 
 
 /**
+ * Obj.
+ */
+/**
  * public final object Obj : kotlin/Any {
  *
  *   // signature: <init>()V
@@ -77,6 +80,9 @@ public final class Obj {
 ////////////////////
 
 
+/**
+ * Test.
+ */
 /**
  * public final class Test : kotlin/Any {
  *
@@ -113,25 +119,45 @@ public final class Obj {
  */
 @kotlin.Metadata()
 public final class Test {
+
+    /**
+     * prop.
+     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String prop = "";
+
+    /**
+     * prop2.
+     */
     @org.jetbrains.annotations.NotNull()
-    private final java.lang.String prop2 = null;
+    private final java.lang.String prop2 = "";
 
     public Test() {
         super();
     }
 
+    /**
+     * method().
+     */
     public final void method() {
     }
 
+    /**
+     * method(int).
+     */
     public final void method(int a) {
     }
 
+    /**
+     * method(String).
+     */
     public final void method(@org.jetbrains.annotations.NotNull()
     java.lang.String a) {
     }
 
+    /**
+     * prop2.
+     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getProp2() {
         return null;
@@ -142,11 +168,17 @@ public final class Test {
     public static void getProp2$annotations() {
     }
 
+    /**
+     * get.
+     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getProp3() {
         return null;
     }
 
+    /**
+     * set.
+     */
     public final void setProp3(@org.jetbrains.annotations.NotNull()
     java.lang.String v) {
     }
@@ -155,6 +187,11 @@ public final class Test {
 ////////////////////
 
 
+/**
+ * Test2
+ * Multiline
+ * documentation.
+ */
 /**
  * public final class Test2 : kotlin/Any {
  *
@@ -188,6 +225,9 @@ public final class Test2 {
 ////////////////////
 
 
+/**
+ * constructor.
+ */
 /**
  * public final class Test3 : kotlin/Any {
  *
@@ -247,6 +287,9 @@ public final class Test4 {
 ////////////////////
 
 
+/**
+ * `/ * Failure * /`
+ */
 /**
  * public abstract interface TestComponent : kotlin/Any {
  *

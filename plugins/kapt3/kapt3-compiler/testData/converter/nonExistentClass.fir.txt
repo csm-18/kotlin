@@ -41,13 +41,13 @@
 @kotlin.Suppress(names = {"UNRESOLVED_REFERENCE"})
 public final class NonExistentType {
     @org.jetbrains.annotations.NotNull()
-    private static final java.lang.Object a = null;
+    private static final ABCDEF a = null;
     @org.jetbrains.annotations.Nullable()
-    private static final java.util.List<error.NonExistentClass> b = null;
+    private static final List<ABCDEF> b = null;
     @org.jetbrains.annotations.NotNull()
-    private static final kotlin.jvm.functions.Function1<error.NonExistentClass, kotlin.Unit> c = null;
+    private static final Function1<ABCDEF, Unit> c = null;
     @org.jetbrains.annotations.NotNull()
-    private static final java.lang.Object d = null;
+    private static final ABCDEF<String, Function1<List<ABCDEF>, Unit>> d = null;
     @org.jetbrains.annotations.NotNull()
     public static final NonExistentType INSTANCE = null;
 
@@ -56,39 +56,39 @@ public final class NonExistentType {
     }
 
     @org.jetbrains.annotations.NotNull()
-    public final java.lang.Object getA() {
+    public final ABCDEF getA() {
         return null;
     }
 
     @org.jetbrains.annotations.Nullable()
-    public final java.util.List<error.NonExistentClass> getB() {
+    public final List<ABCDEF> getB() {
         return null;
     }
 
     @org.jetbrains.annotations.NotNull()
-    public final kotlin.jvm.functions.Function1<error.NonExistentClass, kotlin.Unit> getC() {
+    public final Function1<ABCDEF, Unit> getC() {
         return null;
     }
 
     @org.jetbrains.annotations.NotNull()
-    public final java.lang.Object getD() {
+    public final ABCDEF<String, Function1<List<ABCDEF>, Unit>> getD() {
         return null;
     }
 
     @org.jetbrains.annotations.NotNull()
-    public final java.lang.Object getFoo() {
+    public final Foo getFoo() {
         return null;
     }
 
     @org.jetbrains.annotations.NotNull()
-    public final java.lang.Object a(@org.jetbrains.annotations.NotNull()
-    java.lang.Object a, @org.jetbrains.annotations.NotNull()
+    public final ABCDEF a(@org.jetbrains.annotations.NotNull()
+    ABCDEF a, @org.jetbrains.annotations.NotNull()
     java.lang.String s) {
         return null;
     }
 
     @org.jetbrains.annotations.NotNull()
-    public final java.lang.Object b(@org.jetbrains.annotations.NotNull()
+    public final ABCDEF b(@org.jetbrains.annotations.NotNull()
     java.lang.String s) {
         return null;
     }

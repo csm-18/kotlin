@@ -6,8 +6,10 @@
 package org.jetbrains.kotlin.kapt4
 
 import org.jetbrains.kotlin.cli.common.GroupedKtSources
+import org.jetbrains.kotlin.cli.common.modules.ModuleBuilder
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.FirKotlinToJvmBytecodeCompiler
+import org.jetbrains.kotlin.cli.jvm.compiler.FirKotlinToJvmBytecodeCompiler.runFrontendForAnalysis
 import org.jetbrains.kotlin.cli.jvm.compiler.pipeline.*
 import org.jetbrains.kotlin.codegen.OriginCollectingClassBuilderFactory
 import org.jetbrains.kotlin.kapt3.KaptContextForStubGeneration
@@ -16,6 +18,7 @@ import org.jetbrains.kotlin.kapt3.test.KaptMessageCollectorProvider
 import org.jetbrains.kotlin.kapt3.test.kaptOptionsProvider
 import org.jetbrains.kotlin.kapt3.test.messageCollectorProvider
 import org.jetbrains.kotlin.kapt3.util.MessageCollectorBackedKaptLogger
+import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.modules.TargetId
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -39,9 +42,9 @@ internal class Kapt4Facade(private val testServices: TestServices) :
 
         val messageCollector = testServices.messageCollectorProvider.getCollector(module)
 
-        val ktFiles = testServices.sourceFileProvider.getKtSourceFilesForSourceFiles(module.files).values.toList()
+        val ktSourceFiles = testServices.sourceFileProvider.getKtSourceFilesForSourceFiles(module.files).values.toList()
 
-        val groupedSources = GroupedKtSources(ktFiles, emptyList(), emptyMap())
+        val groupedSources = GroupedKtSources(ktSourceFiles, emptyList(), emptyMap())
 
         val compilerInput = ModuleCompilerInput(
             TargetId(module.name, "test"),
@@ -56,14 +59,17 @@ internal class Kapt4Facade(private val testServices: TestServices) :
             messageCollector,
         )
 
-        val diagnosticsReporter = FirKotlinToJvmBytecodeCompiler.createPendingReporter(messageCollector)
-
-        val analysisResults = compileModuleToAnalyzedFir(
-            compilerInput,
+        val compilerConfigurationProvider = testServices.compilerConfigurationProvider
+        val project = compilerConfigurationProvider.getProject(module)
+        val ktFiles = testServices.sourceFileProvider.getKtFilesForSourceFiles(module.files, project).values.toList()
+        val cliModule = ModuleBuilder(JvmProtoBufUtil.DEFAULT_MODULE_NAME, ".", "java-production")
+        val analysisResults = runFrontendForAnalysis(
             projectEnvironment,
-            emptyList(),
+            configurationProvider.getCompilerConfiguration(module),
+            messageCollector,
+            ktFiles,
             null,
-            diagnosticsReporter,
+            cliModule
         )
 
         val cleanDiagnosticReporter = FirKotlinToJvmBytecodeCompiler.createPendingReporter(messageCollector)

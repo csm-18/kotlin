@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.cli.common.messages.OutputMessageUtil.formatOutputMe
 import org.jetbrains.kotlin.cli.common.output.writeAll
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.FirKotlinToJvmBytecodeCompiler
+import org.jetbrains.kotlin.cli.jvm.compiler.FirKotlinToJvmBytecodeCompiler.runFrontendForAnalysis
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.compiler.pipeline.*
 import org.jetbrains.kotlin.cli.jvm.config.JavaSourceRoot
 import org.jetbrains.kotlin.cli.jvm.config.JvmClasspathRoot
@@ -120,16 +122,17 @@ private class Kapt4AnalysisHandlerExtension : FirAnalysisHandlerExtension() {
                 return false
             }
 
-            val diagnosticsReporter = FirKotlinToJvmBytecodeCompiler.createPendingReporter(messageCollector)
-
             if (options.mode.generateStubs) {
                 val (analysisTime, analysisResults) = measureTimeMillis {
-                    compileModuleToAnalyzedFir(
-                        compilerInput,
+                    val environment = KotlinCoreEnvironment.createForProduction(projectDisposable, updatedConfiguration, EnvironmentConfigFiles.JVM_CONFIG_FILES)
+
+                    runFrontendForAnalysis(
                         projectEnvironment,
-                        emptyList(),
+                        updatedConfiguration,
+                        messageCollector,
+                        environment.getSourceFiles(),
                         null,
-                        diagnosticsReporter,
+                        module,
                     )
                 }
 

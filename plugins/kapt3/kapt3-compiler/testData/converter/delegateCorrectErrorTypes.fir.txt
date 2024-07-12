@@ -55,7 +55,7 @@ public final class Delegate {
     @org.jetbrains.annotations.NotNull()
     public final java.lang.Object getValue(@org.jetbrains.annotations.NotNull()
     java.lang.Object thisRef, @org.jetbrains.annotations.NotNull()
-    java.lang.Object property) {
+    KProperty<?> property) {
         return null;
     }
 }

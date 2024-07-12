@@ -393,7 +393,7 @@ public enum Color {
 @kotlin.Metadata()
 public final class Test {
     @org.jetbrains.annotations.NotNull()
-    private final java.lang.String value = null;
+    private final java.lang.String value = "";
 
     public Test() {
         super();
