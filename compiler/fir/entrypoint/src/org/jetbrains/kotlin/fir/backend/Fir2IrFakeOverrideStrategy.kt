@@ -72,7 +72,6 @@ class Fir2IrFakeOverrideStrategy(
 private data class DelegatedMemberInfo(
     val delegatedMember: IrOverridableDeclaration<*>,
     val delegateTargetFromBaseType: IrOverridableDeclaration<*>,
-    val classSymbolOfDelegateField: IrClassSymbol,
     val delegateField: IrField,
     val parent: IrClass,
 )
@@ -158,18 +157,6 @@ class Fir2IrDelegatedMembersGenerationStrategy(
 
         if (!fir2IrExtensions.shouldGenerateDelegatedMember(delegateTargetFromBaseType)) return
 
-        val delegateField = delegateFieldSymbol.owner
-
-        fun IrType.extractClassSymbol(): IrClassSymbol {
-            return when (val classifier = this.classifierOrFail) {
-                is IrClassSymbol -> classifier
-                is IrTypeParameterSymbol -> classifier.owner.superTypes.first().extractClassSymbol()
-                else -> shouldNotBeCalled()
-            }
-        }
-
-        val classOfDelegateField = delegateField.type.extractClassSymbol()
-
         when (overridableMember) {
             is IrSimpleFunction -> overridableMember.updateDeclarationHeader()
             is IrProperty -> {
@@ -179,13 +166,15 @@ class Fir2IrDelegatedMembersGenerationStrategy(
             }
         }
 
-        delegatedInfos += DelegatedMemberInfo(
-            overridableMember,
-            delegateTargetFromBaseType,
-            classOfDelegateField,
-            delegateField,
-            parent
-        )
+        delegatedInfos += DelegatedMemberInfo(overridableMember, delegateTargetFromBaseType, delegateFieldSymbol.owner, parent)
+    }
+
+    private fun IrType.extractDelegateFieldTypeClassSymbol(): IrClassSymbol {
+        return when (val classifier = this.classifierOrFail) {
+            is IrClassSymbol -> classifier
+            is IrTypeParameterSymbol -> classifier.owner.superTypes.first().extractDelegateFieldTypeClassSymbol()
+            else -> shouldNotBeCalled()
+        }
     }
 
     private fun IrOverridableDeclaration<*>.updateDeclarationHeader() {
@@ -202,7 +191,8 @@ class Fir2IrDelegatedMembersGenerationStrategy(
 
     fun generateDelegatedBodies() {
         for (delegatedInfo in delegatedInfos) {
-            val (delegatedMember, delegateTargetFromBaseType, classSymbolOfDelegateField, delegateField, parent) = delegatedInfo
+            val (delegatedMember, delegateTargetFromBaseType, delegateField, parent) = delegatedInfo
+            val classSymbolOfDelegateField = delegateField.type.extractDelegateFieldTypeClassSymbol()
             when (delegatedMember) {
                 is IrSimpleFunction -> generateDelegatedFunctionBody(
                     delegatedMember,
