@@ -170,7 +170,7 @@ public final class Test2 {
 @kotlin.Metadata()
 public final class Test3 {
     @org.jetbrains.annotations.NotNull()
-    private final Test3.Amigo.Example foo = Test3.Amigo.Example.FOO;
+    private final Test3.Amigo.Example foo = null;
 
     public Test3() {
         super();
@@ -246,7 +246,7 @@ public final class Test3 {
  */
 @kotlin.Metadata()
 public final class Test4 {
-    private final int foo = 1;
+    private final int foo = 0;
     @org.jetbrains.annotations.NotNull()
     public static final Test4.Companion Companion = null;
 

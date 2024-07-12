@@ -11,9 +11,6 @@ public class JavaClass {
 
 package te.st.a;
 
-import te.st.a.$Test.Inner;
-import te.st.a.Test$.Inner$;
-
 /**
  * package {
  *
@@ -32,6 +29,6 @@ public final class TestKt {
     }
 
     public static final void a(@org.jetbrains.annotations.NotNull()
-    te.st.a.$Test.Inner a) {
+    java.lang.Object a) {
     }
 }

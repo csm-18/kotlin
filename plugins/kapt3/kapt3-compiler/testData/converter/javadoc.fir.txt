@@ -1,9 +1,6 @@
 package javadoc;
 
 /**
- * Simple
- */
-/**
  * public final class javadoc/A : kotlin/Any {
  *
  *   // signature: <init>()V
@@ -24,11 +21,6 @@ public final class A {
 
 package javadoc;
 
-/**
- * Multi
- * line
- * comment.
- */
 /**
  * public final class javadoc/B : kotlin/Any {
  *
@@ -86,46 +78,16 @@ package javadoc;
  */
 @kotlin.Metadata()
 public final class B {
-
-    /**
-     * Nested
-     * member
-     * comment.
-     */
     @org.jetbrains.annotations.NotNull()
-    private final java.lang.String a = "";
-
-    /**
-     * Mixed
-     * tabs/spaces
-     */
+    private final java.lang.String a = null;
     @org.jetbrains.annotations.NotNull()
-    private final java.lang.String b = "";
-
-    /**
-     * List:
-     * * first item
-     * * second item
-     */
+    private final java.lang.String b = null;
     @org.jetbrains.annotations.NotNull()
-    private final java.lang.String c = "";
-
-    /**
-     * Without
-     * stars
-     */
+    private final java.lang.String c = null;
     @org.jetbrains.annotations.NotNull()
-    private final java.lang.String d = "";
-
-    /**
-     * A mutable property
-     */
+    private final java.lang.String d = null;
     @org.jetbrains.annotations.NotNull()
-    private java.lang.String e = "";
-
-    /**
-     * A property with a backing field and an explicit setter
-     */
+    private java.lang.String e;
     @org.jetbrains.annotations.NotNull()
     private java.lang.String g;
 
@@ -133,55 +95,31 @@ public final class B {
         super();
     }
 
-    /**
-     * Nested
-     * member
-     * comment.
-     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getA() {
         return null;
     }
 
-    /**
-     * Mixed
-     * tabs/spaces
-     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getB() {
         return null;
     }
 
-    /**
-     * List:
-     * * first item
-     * * second item
-     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getC() {
         return null;
     }
 
-    /**
-     * Without
-     * stars
-     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getD() {
         return null;
     }
 
-    /**
-     * A mutable property
-     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getE() {
         return null;
     }
 
-    /**
-     * A mutable property
-     */
     public final void setE(@org.jetbrains.annotations.NotNull()
     java.lang.String p0) {
     }
@@ -195,9 +133,6 @@ public final class B {
     java.lang.String value) {
     }
 
-    /**
-     * A property with a backing field and an explicit setter
-     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getG() {
         return null;
@@ -207,9 +142,6 @@ public final class B {
     java.lang.String value) {
     }
 
-    /**
-     * It's a getter
-     */
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String getH() {
         return null;

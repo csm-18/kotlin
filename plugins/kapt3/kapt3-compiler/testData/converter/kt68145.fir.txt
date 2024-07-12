@@ -39,7 +39,7 @@ public final class Kt68145Kt {
     }
     @org.jetbrains.annotations.NotNull()
     public static final java.lang.String value = "";
-    private static final int hidden = 1;
+    private static final int hidden = 0;
 
     @A()
     @java.lang.Deprecated()

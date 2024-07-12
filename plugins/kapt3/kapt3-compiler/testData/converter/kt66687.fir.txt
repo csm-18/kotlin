@@ -20,7 +20,7 @@
 public final class Test {
     @org.jetbrains.annotations.NotNull()
     private final java.lang.String a$1 = null;
-    private static final int a = 1;
+    private static final int a = 0;
     @org.jetbrains.annotations.NotNull()
     public static final Test.Companion Companion = null;
 

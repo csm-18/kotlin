@@ -1,5 +1,3 @@
-import kotlin.reflect.KProperty;
-
 /**
  * package {
  *
@@ -22,20 +20,18 @@ public final class AnonymousDelegateKt {
     @org.jetbrains.annotations.NotNull()
     private static final java.lang.Object delegate$delegate = null;
 
+    public static final void setDelegate(@org.jetbrains.annotations.NotNull()
+    java.lang.Object p0) {
+    }
+
     @org.jetbrains.annotations.NotNull()
     public static final java.lang.Object getDelegate() {
         return null;
-    }
-
-    public static final void setDelegate(@org.jetbrains.annotations.NotNull()
-    java.lang.Object p0) {
     }
 }
 
 ////////////////////
 
-
-import kotlin.reflect.KProperty;
 
 /**
  * public final class ConcreteDelegate : kotlin/Any {
@@ -65,8 +61,6 @@ public final class ConcreteDelegate {
 
 ////////////////////
 
-
-import kotlin.reflect.KProperty;
 
 /**
  * public final class Test : kotlin/Any {
@@ -116,22 +110,22 @@ public final class Test {
         super();
     }
 
+    public final void setBroken(@org.jetbrains.annotations.NotNull()
+    java.lang.Object p0) {
+    }
+
     @org.jetbrains.annotations.NotNull()
     public final java.lang.Object getBroken() {
         return null;
     }
 
-    public final void setBroken(@org.jetbrains.annotations.NotNull()
+    public final void setOverridden(@org.jetbrains.annotations.NotNull()
     java.lang.Object p0) {
     }
 
     @org.jetbrains.annotations.NotNull()
     public final java.lang.Object getOverridden() {
         return null;
-    }
-
-    public final void setOverridden(@org.jetbrains.annotations.NotNull()
-    java.lang.Object p0) {
     }
 
     private final java.lang.Runnable getLazyProp() {

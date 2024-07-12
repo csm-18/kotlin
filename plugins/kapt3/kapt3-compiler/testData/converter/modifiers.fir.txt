@@ -66,10 +66,10 @@ package modifiers;
 public final class Modifiers {
     @kotlin.jvm.Transient()
     @org.jetbrains.annotations.NotNull()
-    private final transient java.lang.String transientField = "";
+    private final transient java.lang.String transientField = null;
     @kotlin.jvm.Volatile()
     @org.jetbrains.annotations.NotNull()
-    private volatile java.lang.String volatileField = "";
+    private volatile java.lang.String volatileField;
 
     public Modifiers() {
         super();

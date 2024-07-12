@@ -14,7 +14,7 @@
 @kotlin.Metadata()
 public final class Test {
     @org.jetbrains.annotations.NotNull()
-    private static final java.lang.String test = "";
+    private static final java.lang.String test = null;
     @org.jetbrains.annotations.NotNull()
     public static final Test.A A = null;
 

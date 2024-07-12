@@ -17,7 +17,7 @@
  */
 @kotlin.Metadata()
 public final class CrashMe {
-    private final int resources = 1;
+    private final int resources = 0;
 
     public CrashMe() {
         super();

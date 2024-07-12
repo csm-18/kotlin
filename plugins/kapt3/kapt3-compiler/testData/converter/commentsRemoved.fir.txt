@@ -116,7 +116,7 @@ public final class Test {
     @org.jetbrains.annotations.NotNull()
     public final java.lang.String prop = "";
     @org.jetbrains.annotations.NotNull()
-    private final java.lang.String prop2 = "";
+    private final java.lang.String prop2 = null;
 
     public Test() {
         super();

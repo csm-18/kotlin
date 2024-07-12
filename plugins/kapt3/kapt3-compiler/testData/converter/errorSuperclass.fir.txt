@@ -20,7 +20,7 @@ package test;
 
 @Anno()
 /**
- * internal final class test/ClassWithParent : kotlin/CharSequence {
+ * internal final class test/ClassWithParent : error/NonExistentClass, error/NonExistentClass, error/NonExistentClass, kotlin/CharSequence {
  *
  *   // signature: <init>()V
  *   public constructor()
@@ -32,18 +32,12 @@ package test;
 @kotlin.Suppress(names = {"UNRESOLVED_REFERENCE"})
 public final class ClassWithParent implements java.lang.CharSequence {
 
+    public ClassWithParent() {
+    }
+
     @java.lang.Override()
     public final char charAt(int index) {
         return '\u0000';
-    }
-
-    @java.lang.Override()
-    public final int length() {
-        return 0;
-    }
-
-    public ClassWithParent() {
-        super();
     }
 
     @java.lang.Override()
@@ -51,4 +45,9 @@ public final class ClassWithParent implements java.lang.CharSequence {
 
     @java.lang.Override()
     public abstract int getLength();
+
+    @java.lang.Override()
+    public final int length() {
+        return 0;
+    }
 }

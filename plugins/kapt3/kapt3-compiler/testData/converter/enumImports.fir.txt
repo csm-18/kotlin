@@ -1,7 +1,5 @@
 package kapt;
 
-import kotlin.annotation.Repeatable;
-
 /**
  * public final enum class kapt/Options : kotlin/Enum<kapt/Options> {
  *

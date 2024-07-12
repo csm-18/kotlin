@@ -137,25 +137,25 @@ public final class Foo {
     public static final java.lang.String aString = "foo";
     public static final int aInt = 3;
     @org.jetbrains.annotations.NotNull()
-    private static final java.lang.String bString = "bar";
-    private static final int bInt = 5;
+    private static final java.lang.String bString = null;
+    private static final int bInt = 0;
     @org.jetbrains.annotations.NotNull()
-    private static java.lang.String cString = "baz";
-    private static int cInt = 7;
+    private static java.lang.String cString;
+    private static int cInt;
     @org.jetbrains.annotations.NotNull()
     private static final java.lang.String d = null;
     private static final int e = 0;
-    private static final int f = 8;
+    private static final int f = 0;
     @org.jetbrains.annotations.NotNull()
-    private static final java.lang.String g = "ab";
-    private static final int h = -4;
-    private static final int i = 2147483647;
+    private static final java.lang.String g = null;
+    private static final int h = 0;
+    private static final int i = 0;
     @org.jetbrains.annotations.NotNull()
     private static final java.lang.String j = null;
     @org.jetbrains.annotations.NotNull()
     private static final java.lang.String k = null;
-    private static final int aliasedInt = 1;
-    private static final int aliasedUInt = 1;
+    private static final int aliasedInt = 0;
+    private static final int aliasedUInt = 0;
     @org.jetbrains.annotations.NotNull()
     public static final Foo INSTANCE = null;
 
@@ -309,22 +309,22 @@ public final class Foo {
 @kotlin.Metadata()
 public final class HavingState {
     @org.jetbrains.annotations.NotNull()
-    private final State state = State.START;
+    private final State state = null;
     @org.jetbrains.annotations.NotNull()
-    private final State[] stateArray = {State.START};
+    private final State[] stateArray = null;
     @org.jetbrains.annotations.NotNull()
-    private final java.lang.String[] stringArray = {"foo"};
+    private final java.lang.String[] stringArray = null;
     @org.jetbrains.annotations.NotNull()
     private final java.util.List<java.lang.String> stringList = null;
     @org.jetbrains.annotations.NotNull()
-    private final java.lang.Integer[] intArray = {1};
+    private final java.lang.Integer[] intArray = null;
     @org.jetbrains.annotations.NotNull()
-    private final float[] floatArray = {-1.0F};
+    private final float[] floatArray = null;
     @org.jetbrains.annotations.NotNull()
     private final java.util.List<java.lang.Integer> intList = null;
-    private final int uint = 1;
+    private final int uint = 0;
     @org.jetbrains.annotations.NotNull()
-    private final kotlin.UInt[] uintArray = {1};
+    private final kotlin.UInt[] uintArray = null;
     @org.jetbrains.annotations.NotNull()
     private final java.util.List<kotlin.UInt> uintList = null;
     @org.jetbrains.annotations.NotNull()

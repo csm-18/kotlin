@@ -74,10 +74,10 @@ public abstract interface FooComponent {
  */
 @kotlin.Metadata()
 public final class JvmStaticTest {
-    private static final int one = 1;
+    private static final int one = 0;
     public static final int two = 2;
     public static final char c = 'C';
-    public final byte three = (byte)3;
+    public final byte three = 0;
     public final char d = 'D';
     @org.jetbrains.annotations.NotNull()
     public static final JvmStaticTest.Companion Companion = null;

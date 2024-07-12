@@ -21,7 +21,7 @@
 @kotlin.Metadata()
 @kotlin.Suppress(names = {"UNRESOLVED_REFERENCE"})
 public final class Application {
-    public DataStore<Preferences> _preferencesDataStore;
+    public java.lang.Object _preferencesDataStore;
     @org.jetbrains.annotations.NotNull()
     public static final Application.Companion Companion = null;
 
@@ -30,12 +30,12 @@ public final class Application {
     }
 
     @org.jetbrains.annotations.NotNull()
-    public final DataStore<Preferences> get_preferencesDataStore() {
+    public final java.lang.Object get_preferencesDataStore() {
         return null;
     }
 
     public final void set_preferencesDataStore(@org.jetbrains.annotations.NotNull()
-    DataStore<Preferences> p0) {
+    java.lang.Object p0) {
     }
 
     @kotlin.jvm.JvmStatic()
