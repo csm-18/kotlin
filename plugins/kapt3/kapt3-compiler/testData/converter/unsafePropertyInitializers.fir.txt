@@ -137,11 +137,11 @@ public final class Foo {
     public static final java.lang.String aString = "foo";
     public static final int aInt = 3;
     @org.jetbrains.annotations.NotNull()
-    private static final java.lang.String bString = null;
-    private static final int bInt = 0;
+    private static final java.lang.String bString = "bar";
+    private static final int bInt = 5;
     @org.jetbrains.annotations.NotNull()
-    private static java.lang.String cString;
-    private static int cInt;
+    private static java.lang.String cString = "baz";
+    private static int cInt = 7;
     @org.jetbrains.annotations.NotNull()
     private static final java.lang.String d = null;
     private static final int e = 0;
@@ -154,7 +154,7 @@ public final class Foo {
     private static final java.lang.String j = null;
     @org.jetbrains.annotations.NotNull()
     private static final java.lang.String k = null;
-    private static final int aliasedInt = 0;
+    private static final int aliasedInt = 1;
     private static final int aliasedUInt = 0;
     @org.jetbrains.annotations.NotNull()
     public static final Foo INSTANCE = null;
