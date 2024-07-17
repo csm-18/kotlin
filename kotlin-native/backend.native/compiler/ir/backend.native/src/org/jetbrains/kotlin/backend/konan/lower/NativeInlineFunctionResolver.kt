@@ -88,8 +88,6 @@ internal class NativeInlineFunctionResolver(
 
         SharedVariablesLowering(context).lower(body, function)
 
-        OuterThisLowering(context).lower(function)
-
         LocalClassesInInlineLambdasLowering(context).lower(body, function)
 
         if (!(context.config.produce.isCache || functionIsCached)) {
