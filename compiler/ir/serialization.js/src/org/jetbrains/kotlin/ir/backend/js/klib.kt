@@ -454,7 +454,7 @@ class ModulesStructure(
         dependencies,
         compilerConfiguration.messageCollector.toLogger(),
         compilerConfiguration.get(JSConfigurationKeys.ZIP_FILE_SYSTEM_ACCESSOR),
-        disallowDuplicatedUniqueNames = compilerConfiguration.get(KlibConfigurationKeys.DISALLOW_DUPLICATED_UNIQUE_NAMES) == true,
+        disallowDuplicatedUniqueNames = compilerConfiguration.getBoolean(KlibConfigurationKeys.DISALLOW_DUPLICATED_UNIQUE_NAMES),
     )
 
     val allDependencies: List<KotlinLibrary>

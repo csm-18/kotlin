@@ -119,7 +119,7 @@ class CacheUpdater(
                 allModules,
                 compilerConfiguration.messageCollector.toLogger(),
                 zipAccessor,
-                disallowDuplicatedUniqueNames = compilerConfiguration.get(KlibConfigurationKeys.DISALLOW_DUPLICATED_UNIQUE_NAMES) == true,
+                disallowDuplicatedUniqueNames = compilerConfiguration.getBoolean(KlibConfigurationKeys.DISALLOW_DUPLICATED_UNIQUE_NAMES),
             )
 
             val libraries = allResolvedDependencies.getFullList(TopologicalLibraryOrder).let { resolvedLibraries ->
