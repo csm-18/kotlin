@@ -1,0 +1,153 @@
+MODULE_FRAGMENT name:<main>
+  FILE fqName:<root> fileName:dataClass.kt
+    CLASS CLASS name:User modality:FINAL visibility:public [data] superTypes:[kotlin.Any]
+      $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:<root>.User
+      PROPERTY name:firstName visibility:public modality:FINAL [val]
+        FIELD PROPERTY_BACKING_FIELD name:firstName type:kotlin.String visibility:private [final]
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-firstName> visibility:public modality:FINAL <> ($this:<root>.User) returnType:kotlin.String
+          correspondingProperty: PROPERTY name:firstName visibility:public modality:FINAL [val]
+          $this: VALUE_PARAMETER name:<this> type:<root>.User
+      PROPERTY name:secondName visibility:public modality:FINAL [val]
+        FIELD PROPERTY_BACKING_FIELD name:secondName type:kotlin.String visibility:private [final]
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-secondName> visibility:public modality:FINAL <> ($this:<root>.User) returnType:kotlin.String
+          correspondingProperty: PROPERTY name:secondName visibility:public modality:FINAL [val]
+          $this: VALUE_PARAMETER name:<this> type:<root>.User
+      PROPERTY name:age visibility:public modality:FINAL [val]
+        FIELD PROPERTY_BACKING_FIELD name:age type:kotlin.Int visibility:private [final]
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-age> visibility:public modality:FINAL <> ($this:<root>.User) returnType:kotlin.Int
+          correspondingProperty: PROPERTY name:age visibility:public modality:FINAL [val]
+          $this: VALUE_PARAMETER name:<this> type:<root>.User
+      CONSTRUCTOR visibility:public <> (firstName:kotlin.String, secondName:kotlin.String, age:kotlin.Int) returnType:<root>.User [primary]
+        VALUE_PARAMETER name:firstName index:0 type:kotlin.String
+        VALUE_PARAMETER name:secondName index:1 type:kotlin.String
+        VALUE_PARAMETER name:age index:2 type:kotlin.Int
+      FUN GENERATED_DATA_CLASS_MEMBER name:component1 visibility:public modality:FINAL <> ($this:<root>.User) returnType:kotlin.String [operator]
+        $this: VALUE_PARAMETER name:<this> type:<root>.User
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public final fun component1 (): kotlin.String [operator] declared in <root>.User'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:firstName type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+              receiver: GET_VAR '<this>: <root>.User declared in <root>.User.component1' type=<root>.User origin=null
+      FUN GENERATED_DATA_CLASS_MEMBER name:component2 visibility:public modality:FINAL <> ($this:<root>.User) returnType:kotlin.String [operator]
+        $this: VALUE_PARAMETER name:<this> type:<root>.User
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public final fun component2 (): kotlin.String [operator] declared in <root>.User'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:secondName type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+              receiver: GET_VAR '<this>: <root>.User declared in <root>.User.component2' type=<root>.User origin=null
+      FUN GENERATED_DATA_CLASS_MEMBER name:component3 visibility:public modality:FINAL <> ($this:<root>.User) returnType:kotlin.Int [operator]
+        $this: VALUE_PARAMETER name:<this> type:<root>.User
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public final fun component3 (): kotlin.Int [operator] declared in <root>.User'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:age type:kotlin.Int visibility:private [final]' type=kotlin.Int origin=null
+              receiver: GET_VAR '<this>: <root>.User declared in <root>.User.component3' type=<root>.User origin=null
+      FUN GENERATED_DATA_CLASS_MEMBER name:copy visibility:public modality:FINAL <> ($this:<root>.User, firstName:kotlin.String, secondName:kotlin.String, age:kotlin.Int) returnType:<root>.User
+        $this: VALUE_PARAMETER name:<this> type:<root>.User
+        VALUE_PARAMETER name:firstName index:0 type:kotlin.String
+        VALUE_PARAMETER name:secondName index:1 type:kotlin.String
+        VALUE_PARAMETER name:age index:2 type:kotlin.Int
+        BLOCK_BODY
+      FUN GENERATED_DATA_CLASS_MEMBER name:equals visibility:public modality:OPEN <> ($this:<root>.User, other:kotlin.Any?) returnType:kotlin.Boolean [operator]
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Any
+        $this: VALUE_PARAMETER name:<this> type:<root>.User
+        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+        BLOCK_BODY
+          WHEN type=kotlin.Unit origin=null
+            BRANCH
+              if: CALL 'public final fun EQEQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EQEQEQ
+                arg0: GET_VAR '<this>: <root>.User declared in <root>.User.equals' type=<root>.User origin=null
+                arg1: GET_VAR 'other: kotlin.Any? declared in <root>.User.equals' type=kotlin.Any? origin=null
+              then: RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in <root>.User'
+                CONST Boolean type=kotlin.Boolean value=true
+          WHEN type=kotlin.Unit origin=null
+            BRANCH
+              if: TYPE_OP type=kotlin.Boolean origin=NOT_INSTANCEOF typeOperand=<root>.User
+                GET_VAR 'other: kotlin.Any? declared in <root>.User.equals' type=kotlin.Any? origin=null
+              then: RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in <root>.User'
+                CONST Boolean type=kotlin.Boolean value=false
+          VAR IR_TEMPORARY_VARIABLE name:tmp0_other_with_cast type:<root>.User [val]
+            TYPE_OP type=<root>.User origin=CAST typeOperand=<root>.User
+              GET_VAR 'other: kotlin.Any? declared in <root>.User.equals' type=kotlin.Any? origin=null
+          WHEN type=kotlin.Unit origin=null
+            BRANCH
+              if: CALL 'public final fun not (): kotlin.Boolean [operator] declared in kotlin.Boolean' type=kotlin.Boolean origin=EXCLEQ
+                $this: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EXCLEQ
+                  arg0: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:firstName type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+                    receiver: GET_VAR '<this>: <root>.User declared in <root>.User.equals' type=<root>.User origin=null
+                  arg1: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:firstName type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+                    receiver: GET_VAR 'val tmp0_other_with_cast: <root>.User [val] declared in <root>.User.equals' type=<root>.User origin=null
+              then: RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in <root>.User'
+                CONST Boolean type=kotlin.Boolean value=false
+          WHEN type=kotlin.Unit origin=null
+            BRANCH
+              if: CALL 'public final fun not (): kotlin.Boolean [operator] declared in kotlin.Boolean' type=kotlin.Boolean origin=EXCLEQ
+                $this: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EXCLEQ
+                  arg0: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:secondName type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+                    receiver: GET_VAR '<this>: <root>.User declared in <root>.User.equals' type=<root>.User origin=null
+                  arg1: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:secondName type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+                    receiver: GET_VAR 'val tmp0_other_with_cast: <root>.User [val] declared in <root>.User.equals' type=<root>.User origin=null
+              then: RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in <root>.User'
+                CONST Boolean type=kotlin.Boolean value=false
+          WHEN type=kotlin.Unit origin=null
+            BRANCH
+              if: CALL 'public final fun not (): kotlin.Boolean [operator] declared in kotlin.Boolean' type=kotlin.Boolean origin=EXCLEQ
+                $this: CALL 'public final fun EQEQ (arg0: kotlin.Any?, arg1: kotlin.Any?): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=EXCLEQ
+                  arg0: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:age type:kotlin.Int visibility:private [final]' type=kotlin.Int origin=null
+                    receiver: GET_VAR '<this>: <root>.User declared in <root>.User.equals' type=<root>.User origin=null
+                  arg1: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:age type:kotlin.Int visibility:private [final]' type=kotlin.Int origin=null
+                    receiver: GET_VAR 'val tmp0_other_with_cast: <root>.User [val] declared in <root>.User.equals' type=<root>.User origin=null
+              then: RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in <root>.User'
+                CONST Boolean type=kotlin.Boolean value=false
+          RETURN type=kotlin.Nothing from='public open fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in <root>.User'
+            CONST Boolean type=kotlin.Boolean value=true
+      FUN GENERATED_DATA_CLASS_MEMBER name:hashCode visibility:public modality:OPEN <> ($this:<root>.User) returnType:kotlin.Int
+        overridden:
+          public open fun hashCode (): kotlin.Int declared in kotlin.Any
+        $this: VALUE_PARAMETER name:<this> type:<root>.User
+        BLOCK_BODY
+          VAR name:result type:kotlin.Int [var]
+            CALL 'public open fun hashCode (): kotlin.Int [fake_override] declared in kotlin.String' type=kotlin.Int origin=null
+              $this: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:firstName type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+                receiver: GET_VAR '<this>: <root>.User declared in <root>.User.hashCode' type=<root>.User origin=null
+          SET_VAR 'var result: kotlin.Int [var] declared in <root>.User.hashCode' type=kotlin.Unit origin=EQ
+            CALL 'public final fun plus (other: kotlin.Int): kotlin.Int [operator] declared in kotlin.Int' type=kotlin.Int origin=null
+              $this: CALL 'public final fun times (other: kotlin.Int): kotlin.Int [operator] declared in kotlin.Int' type=kotlin.Int origin=null
+                $this: GET_VAR 'var result: kotlin.Int [var] declared in <root>.User.hashCode' type=kotlin.Int origin=null
+                other: CONST Int type=kotlin.Int value=31
+              other: CALL 'public open fun hashCode (): kotlin.Int [fake_override] declared in kotlin.String' type=kotlin.Int origin=null
+                $this: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:secondName type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+                  receiver: GET_VAR '<this>: <root>.User declared in <root>.User.hashCode' type=<root>.User origin=null
+          SET_VAR 'var result: kotlin.Int [var] declared in <root>.User.hashCode' type=kotlin.Unit origin=EQ
+            CALL 'public final fun plus (other: kotlin.Int): kotlin.Int [operator] declared in kotlin.Int' type=kotlin.Int origin=null
+              $this: CALL 'public final fun times (other: kotlin.Int): kotlin.Int [operator] declared in kotlin.Int' type=kotlin.Int origin=null
+                $this: GET_VAR 'var result: kotlin.Int [var] declared in <root>.User.hashCode' type=kotlin.Int origin=null
+                other: CONST Int type=kotlin.Int value=31
+              other: CALL 'public open fun hashCode (): kotlin.Int [fake_override] declared in kotlin.Int' type=kotlin.Int origin=null
+                $this: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:age type:kotlin.Int visibility:private [final]' type=kotlin.Int origin=null
+                  receiver: GET_VAR '<this>: <root>.User declared in <root>.User.hashCode' type=<root>.User origin=null
+          RETURN type=kotlin.Nothing from='public open fun hashCode (): kotlin.Int declared in <root>.User'
+            GET_VAR 'var result: kotlin.Int [var] declared in <root>.User.hashCode' type=kotlin.Int origin=null
+      FUN GENERATED_DATA_CLASS_MEMBER name:toString visibility:public modality:OPEN <> ($this:<root>.User) returnType:kotlin.String
+        overridden:
+          public open fun toString (): kotlin.String declared in kotlin.Any
+        $this: VALUE_PARAMETER name:<this> type:<root>.User
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public open fun toString (): kotlin.String declared in <root>.User'
+            STRING_CONCATENATION type=kotlin.String
+              CONST String type=kotlin.String value="User("
+              CONST String type=kotlin.String value="firstName="
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:firstName type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+                receiver: GET_VAR '<this>: <root>.User declared in <root>.User.toString' type=<root>.User origin=null
+              CONST String type=kotlin.String value=", "
+              CONST String type=kotlin.String value="secondName="
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:secondName type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+                receiver: GET_VAR '<this>: <root>.User declared in <root>.User.toString' type=<root>.User origin=null
+              CONST String type=kotlin.String value=", "
+              CONST String type=kotlin.String value="age="
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:age type:kotlin.Int visibility:private [final]' type=kotlin.Int origin=null
+                receiver: GET_VAR '<this>: <root>.User declared in <root>.User.toString' type=<root>.User origin=null
+              CONST String type=kotlin.String value=")"
+      FUN name:procedure visibility:public modality:FINAL <> ($this:<root>.User) returnType:kotlin.Unit
+        $this: VALUE_PARAMETER name:<this> type:<root>.User
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public final fun procedure (): kotlin.Unit declared in <root>.User'
+            ERROR_EXPR 'skipBodies' type=kotlin.Nothing
