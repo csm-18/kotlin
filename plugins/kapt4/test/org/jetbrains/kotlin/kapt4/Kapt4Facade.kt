@@ -61,7 +61,7 @@ internal class Kapt4Facade(private val testServices: TestServices) :
 
         val compilerConfigurationProvider = testServices.compilerConfigurationProvider
         val project = compilerConfigurationProvider.getProject(module)
-        val ktFiles = testServices.sourceFileProvider.getKtFilesForSourceFiles(module.files, project).values.toList()
+        val ktFiles = testServices.sourceFileProvider.getKtFilesForSourceFiles(module.files, project, true).values.toList()
         val cliModule = ModuleBuilder(JvmProtoBufUtil.DEFAULT_MODULE_NAME, ".", "java-production")
         val analysisResults = runFrontendForAnalysis(
             projectEnvironment,
