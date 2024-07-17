@@ -6,10 +6,12 @@
 package org.jetbrains.kotlin.gradle.fus.internal
 
 
+import org.gradle.api.Project
 import org.gradle.api.logging.Logging
 import java.io.File
 import java.io.FileOutputStream
 import java.nio.file.Files
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 internal abstract class InternalGradleBuildFusStatisticsService : GradleBuildFusStatisticsBuildService() {
@@ -17,16 +19,23 @@ internal abstract class InternalGradleBuildFusStatisticsService : GradleBuildFus
     private val metrics = ConcurrentHashMap<Metric, Any>()
     private val log = Logging.getLogger(this.javaClass)
 
+    //It is not possible to rely on BuildUidService in close() method
+    private val buildId = UUID.randomUUID().toString()
+
+    //since Gradle
     override fun close() {
-        val reportFile = File(parameters.fusStatisticsRootDirPath.get(), STATISTICS_FOLDER_NAME)
-            .also { Files.createDirectories(it.toPath()) }
-            .resolve(parameters.buildId.get())
-        reportFile.createNewFile()
-        FileOutputStream(reportFile, true).bufferedWriter().use {
-            for ((key, value) in metrics) {
-                it.appendLine("$key=$value")
+        //since Gradle 8.1 flow action [BuildFinishFlowAction] is used to collect all metrics and write them down in a single file
+        if (!parameters.useBuildFinishFlowAction.get()) {
+            val reportFile = File(parameters.fusStatisticsRootDirPath.get(), STATISTICS_FOLDER_NAME)
+                .also { Files.createDirectories(it.toPath()) }
+                .resolve(buildId)
+            reportFile.createNewFile()
+            FileOutputStream(reportFile, true).bufferedWriter().use {
+                for ((key, value) in metrics) {
+                    it.appendLine("$key=$value")
+                }
+                it.appendLine(BUILD_SESSION_SEPARATOR)
             }
-            it.appendLine(BUILD_SESSION_SEPARATOR)
         }
     }
 

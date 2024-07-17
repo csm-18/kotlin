@@ -62,7 +62,7 @@ class FusStatisticsIT : KGPBaseTest() {
     @DisplayName("Verify that the metric for applying the Cocoapods plugin is being collected")
     @GradleTest
     fun testMetricCollectingOfApplyingCocoapodsPlugin(gradleVersion: GradleVersion) {
-        project("native-cocoapods-template", gradleVersion) {
+        project("native-cocoapods-template", gradleVersion, enableGradleDebug = true) {
             build("assemble", "-Pkotlin.session.logger.root.path=$projectPath") {
                 assertFileContains(fusStatisticsPath, "COCOAPODS_PLUGIN_ENABLED=true", "ENABLED_HMPP=true", "MPP_PLATFORMS")
             }
@@ -162,7 +162,7 @@ class FusStatisticsIT : KGPBaseTest() {
         project(
             "instantExecutionWithIncludedBuildPlugin",
             gradleVersion,
-            buildOptions = defaultBuildOptions.copy(configurationCache = true)
+            buildOptions = defaultBuildOptions.copy(configurationCache = true),
         ) {
             build("compileKotlin", "-Pkotlin.session.logger.root.path=$projectPath") {
                 Files.list(projectPath.resolve("kotlin-profile")).forEach {
