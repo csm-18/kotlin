@@ -6,43 +6,116 @@
 package org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.tasks
 
 import org.gradle.api.DefaultTask
+import org.gradle.api.artifacts.component.LibraryBinaryIdentifier
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.file.ConfigurableFileCollection
+import org.gradle.api.file.FileSystemOperations
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.provider.Property
+import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.gradle.work.DisableCachingByDefault
 import org.gradle.workers.WorkerExecutor
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal.SwiftExportTaskParameters
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal.SwiftExportAction
-import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal.SwiftExportParameters
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.internal.SwiftExportedModule
+import org.jetbrains.kotlin.gradle.utils.LazyResolvedConfiguration
+import org.jetbrains.kotlin.gradle.utils.dashSeparatedToUpperCamelCase
+import org.jetbrains.kotlin.gradle.utils.getFile
 import java.io.File
-import java.io.Serializable
 import javax.inject.Inject
 
 @DisableCachingByDefault(because = "Swift Export is experimental, so no caching for now")
-internal abstract class SwiftExportTask : DefaultTask() {
+internal abstract class SwiftExportTask @Inject constructor(
+    private val workerExecutor: WorkerExecutor,
+    private val fileSystem: FileSystemOperations,
+) : DefaultTask() {
 
-    @get:Inject
-    abstract val workerExecutor: WorkerExecutor
+    @get:Internal
+    abstract val configuration: Property<LazyResolvedConfiguration>
+
+    @get:Input
+    abstract val mainModuleName: Property<String>
+
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.RELATIVE)
+    abstract val mainArtifact: RegularFileProperty
 
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
     abstract val swiftExportClasspath: ConfigurableFileCollection
 
     @get:Nested
-    abstract val parameters: SwiftExportParameters
+    abstract val parameters: SwiftExportTaskParameters
 
     @TaskAction
     fun run() {
+        cleanup()
+
         val swiftExportQueue = workerExecutor.classLoaderIsolation { workerSpec ->
             workerSpec.classpath.from(swiftExportClasspath)
         }
 
         swiftExportQueue.submit(SwiftExportAction::class.java) { workParameters ->
-            workParameters.stableDeclarationsOrder.set(parameters.stableDeclarationsOrder)
-            workParameters.swiftApiModuleName.set(parameters.swiftApiModuleName)
             workParameters.bridgeModuleName.set(parameters.bridgeModuleName)
             workParameters.konanDistribution.set(parameters.konanDistribution)
-            workParameters.kotlinLibraryFile.set(parameters.kotlinLibraryFile)
             workParameters.outputPath.set(parameters.outputPath)
+            workParameters.stableDeclarationsOrder.set(parameters.stableDeclarationsOrder)
+            workParameters.swiftModules.set(swiftExportedModules())
             workParameters.swiftModulesFile.set(parameters.swiftModulesFile)
         }
+    }
+
+    private fun cleanup() {
+        try {
+            fileSystem.delete {
+                it.delete(parameters.outputPath)
+            }
+        } catch (e: Exception) {
+            logger.warn("Can't delete Swift Export output folder", e)
+        }
+    }
+
+    private fun swiftExportedModules(): Provider<List<SwiftExportedModule>> {
+        return configuration.map { configuration ->
+            configuration.swiftExportedModules()
+        }.map { modules ->
+            modules.toMutableList().apply {
+                add(SwiftExportedModule(mainModuleName.get(), mainArtifact.getFile()))
+            }
+        }
+    }
+}
+
+private val File.isCinteropKlib get() = extension == "klib" && nameWithoutExtension.contains("cinterop-interop")
+
+internal fun Collection<File>.filterCinteropKlibs(): List<File> = filterNot(File::isCinteropKlib)
+
+internal fun LazyResolvedConfiguration.swiftExportedModules(): List<SwiftExportedModule> {
+    return allResolvedDependencies.filterNot { dependencyResult ->
+        dependencyResult.resolvedVariant.owner.let { id -> id is ModuleComponentIdentifier && id.module == "kotlin-stdlib" }
+    }.map { dependencyResult ->
+        val dependencyArtifacts = getArtifacts(dependencyResult)
+            .map { it.file }
+            .filterCinteropKlibs()
+
+        if (dependencyArtifacts.isEmpty() || dependencyArtifacts.size > 1) {
+            throw AssertionError(
+                "Dependency $dependencyResult ${
+                    if (dependencyArtifacts.isEmpty())
+                        "doesn't have suitable artifacts"
+                    else
+                        "has too many artifacts: $dependencyArtifacts"
+                }"
+            )
+        }
+
+        when (val dependencyModule = dependencyResult.resolvedVariant.owner) {
+            is ProjectComponentIdentifier -> dashSeparatedToUpperCamelCase(dependencyModule.projectName)
+            is ModuleComponentIdentifier -> dashSeparatedToUpperCamelCase(dependencyModule.moduleIdentifier.name)
+            is LibraryBinaryIdentifier -> dashSeparatedToUpperCamelCase(dependencyModule.libraryName)
+            else -> throw AssertionError("Unsupported dependency $dependencyResult")
+        }.let { SwiftExportedModule(it, dependencyArtifacts.single()) }
     }
 }
