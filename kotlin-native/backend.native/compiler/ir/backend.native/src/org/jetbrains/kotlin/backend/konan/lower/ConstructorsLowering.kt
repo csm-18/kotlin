@@ -34,6 +34,12 @@ import org.jetbrains.kotlin.utils.addToStdlib.getOrSetIfNull
 internal var IrConstructor.constructorImplFunction: IrSimpleFunction? by irAttribute(followAttributeOwner = false)
 internal var IrSimpleFunction.constructor: IrConstructor? by irAttribute(followAttributeOwner = false)
 
+internal val IrFunction.thisOrImplForConstructor: IrSimpleFunction
+    get() = when (this) {
+        is IrSimpleFunction -> this
+        is IrConstructor -> this.constructorImplFunction!!
+    }
+
 internal val LOWERED_DELEGATING_CONSTRUCTOR_CALL by IrStatementOriginImpl
 
 internal class ConstructorsLowering(private val context: Context) : FileLoweringPass, IrElementTransformer<IrDeclaration?> {

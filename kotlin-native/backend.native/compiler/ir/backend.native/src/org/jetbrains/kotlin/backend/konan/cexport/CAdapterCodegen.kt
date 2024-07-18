@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.backend.konan.llvm.CodeGenerator
 import org.jetbrains.kotlin.backend.konan.llvm.ContextUtils
 import org.jetbrains.kotlin.backend.konan.llvm.ExceptionHandler
 import org.jetbrains.kotlin.backend.konan.llvm.Lifetime
-import org.jetbrains.kotlin.backend.konan.lower.constructorImplFunction
+import org.jetbrains.kotlin.backend.konan.lower.thisOrImplForConstructor
 import org.jetbrains.kotlin.backend.konan.lower.getObjectClassInstanceFunction
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.ir.declarations.*
@@ -53,7 +53,7 @@ internal class CAdapterCodegen(
                     } else {
                         // KT-45468: Alias insertion may not be handled by LLVM properly, in case callee is in the cache.
                         // Hence, insert not an alias but a wrapper, hoping it will be optimized out later.
-                        codegen.llvmFunction((irFunction as? IrSimpleFunction) ?: (irFunction as IrConstructor).constructorImplFunction!!)
+                        codegen.llvmFunction(irFunction.thisOrImplForConstructor)
                     }
 
                     val args = signature.parameterTypes.indices.map { param(it) }

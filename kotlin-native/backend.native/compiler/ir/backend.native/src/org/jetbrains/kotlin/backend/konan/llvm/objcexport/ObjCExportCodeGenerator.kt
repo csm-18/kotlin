@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.backend.konan.llvm.objc.ObjCCodeGenerator
 import org.jetbrains.kotlin.backend.konan.llvm.objc.ObjCDataGenerator
 import org.jetbrains.kotlin.backend.konan.lower.constructorImplFunction
 import org.jetbrains.kotlin.backend.konan.lower.getObjectClassInstanceFunction
+import org.jetbrains.kotlin.backend.konan.lower.thisOrImplForConstructor
 import org.jetbrains.kotlin.backend.konan.objcexport.*
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
@@ -935,7 +936,7 @@ private fun ObjCExportCodeGenerator.generateObjCImp(
         val llvmCallable = if (isVirtual) {
             codegen.getVirtualFunctionTrampoline(target as IrSimpleFunction)
         } else {
-            codegen.llvmFunction(target as? IrSimpleFunction ?: (target as IrConstructor).constructorImplFunction!!)
+            codegen.llvmFunction(target.thisOrImplForConstructor)
         }
         call(llvmCallable, args, resultLifetime, exceptionHandler)
     }
