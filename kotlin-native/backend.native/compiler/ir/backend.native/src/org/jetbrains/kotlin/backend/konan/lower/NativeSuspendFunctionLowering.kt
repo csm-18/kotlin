@@ -172,7 +172,8 @@ internal class NativeSuspendFunctionsLowering(
 
                 val newChildren = arrayOfNulls<IrExpression?>(numberOfChildren)
                 val tempStatements = mutableListOf<IrStatement>()
-                var first = true
+                // Constructor calls will be lowered to (inst = alloc(), call(inst, args)) and therefore no constructor argument is first.
+                var first = (expression as? IrMemberAccessExpression<*>)?.symbol?.owner !is IrConstructor
                 for ((index, child) in children.withIndex()) {
                     if (child == null) continue
                     val transformedChild =

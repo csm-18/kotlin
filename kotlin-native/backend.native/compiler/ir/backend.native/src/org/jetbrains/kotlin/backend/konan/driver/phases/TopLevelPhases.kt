@@ -402,6 +402,7 @@ private fun PhaseEngine<NativeGenerationState>.runCodegen(module: IrModuleFragme
     val optimize = context.shouldOptimize()
     module.files.forEach {
         runPhase(ReturnsInsertionPhase, it)
+        runPhase(ConstructorsLoweringPhase, it)
     }
     val moduleDFG = runPhase(BuildDFGPhase, module, disable = !optimize)
     val devirtualizationAnalysisResults = runPhase(DevirtualizationAnalysisPhase, DevirtualizationAnalysisInput(module, moduleDFG), disable = !optimize)

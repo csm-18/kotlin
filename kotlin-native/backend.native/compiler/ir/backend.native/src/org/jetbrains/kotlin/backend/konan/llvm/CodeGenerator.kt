@@ -592,8 +592,8 @@ internal abstract class FunctionGenerationContext(
     }
 
     var returnType: LLVMTypeRef? = function.returnType
-    val constructedClass: IrClass?
-        get() = (irFunction as? IrConstructor)?.constructedClass
+//    val constructedClass: IrClass?
+//        get() = (irFunction as? IrConstructor)?.constructedClass
     var returnSlot: LLVMValueRef? = null
         private set
     private var slotsPhi: LLVMValueRef? = null

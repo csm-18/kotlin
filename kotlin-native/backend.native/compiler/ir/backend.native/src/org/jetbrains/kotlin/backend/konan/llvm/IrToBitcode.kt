@@ -92,8 +92,9 @@ internal val IrField.needsGCRegistration
 
 
 internal fun IrFunction.shouldGenerateBody(): Boolean = when {
-    this is IrConstructor && constructedClass.isInlined() -> false
-    this is IrConstructor && isObjCConstructor -> false
+//    this is IrConstructor && constructedClass.isInlined() -> false
+//    this is IrConstructor && isObjCConstructor -> false
+    this is IrConstructor -> false // All constructors with bodies should have been lowered.
     this is IrSimpleFunction && modality == Modality.ABSTRACT -> false
     isExternal -> false
     else -> true
@@ -951,9 +952,12 @@ internal class CodeGeneratorVisitor(
         when (value) {
             is IrTypeOperatorCall    -> return evaluateTypeOperator           (value, resultSlot)
             is IrCall                -> return evaluateCall                   (value, resultSlot)
+//            is IrDelegatingConstructorCall ->
+//                                        return evaluateCall                   (value, resultSlot)
+//            is IrConstructorCall     -> return evaluateCall                   (value, resultSlot)
             is IrDelegatingConstructorCall ->
-                                        return evaluateCall                   (value, resultSlot)
-            is IrConstructorCall     -> return evaluateCall                   (value, resultSlot)
+                                        error("Should've been lowered: ${value.render()}")
+            is IrConstructorCall     -> error("Should've been lowered: ${value.render()}")
             is IrInstanceInitializerCall ->
                                         return evaluateInstanceInitializerCall(value)
             is IrGetValue            -> return evaluateGetValue               (value, resultSlot)
@@ -1939,9 +1943,11 @@ internal class CodeGeneratorVisitor(
                     // Child(val otherField: ...) : Base(constantValue)
                     //
                     //  Child(constantValue) could be initialized constantly. This is required for function references.
-                    val delegatedCallConstants = constructor.body?.statements
-                            ?.filterIsInstance<IrDelegatingConstructorCall>()
-                            ?.singleOrNull()
+                    val delegatedCallConstants = constructor.constructorImplFunction!!.body?.statements
+                            //?.filterIsInstance<IrDelegatingConstructorCall>()
+                            //?.singleOrNull()
+                            ?.filterIsInstance<IrCall>()
+                            ?.singleOrNull { it.origin == LOWERED_DELEGATING_CONSTRUCTOR_CALL }
                             ?.getArgumentsWithIr()
                             ?.filter { it.second is IrConstantValue }
                             ?.associate { it.first.name.toString() to it.second }
@@ -2191,11 +2197,12 @@ internal class CodeGeneratorVisitor(
         val args = evaluateExplicitArgs(value)
 
         updateBuilderDebugLocation(value)
-        return when (value) {
-            is IrDelegatingConstructorCall -> delegatingConstructorCall(value.symbol.owner, args)
-            is IrConstructorCall -> evaluateConstructorCall(value, args, resultSlot)
-            else -> evaluateFunctionCall(value as IrCall, args, resultLifetime(value), resultSlot)
-        }
+        return evaluateFunctionCall(value as IrCall, args, resultLifetime(value), resultSlot)
+//        return when (value) {
+//            is IrDelegatingConstructorCall -> delegatingConstructorCall(value.symbol.owner, args)
+//            is IrConstructorCall -> evaluateConstructorCall(value, args, resultSlot)
+//            else -> evaluateFunctionCall(value as IrCall, args, resultLifetime(value), resultSlot)
+//        }
     }
 
     //-------------------------------------------------------------------------//
@@ -2279,7 +2286,8 @@ internal class CodeGeneratorVisitor(
         }
         return with(debugInfo) {
             val f = this@scope
-            val nodebug = f is IrConstructor && f.parentAsClass.isSubclassOf(context.irBuiltIns.throwableClass.owner)
+            //val nodebug = f is IrConstructor && f.parentAsClass.isSubclassOf(context.irBuiltIns.throwableClass.owner)
+            val nodebug = (f as IrSimpleFunction).constructor != null && f.parentAsClass.isSubclassOf(context.irBuiltIns.throwableClass.owner)
             if (functionLlvmValue != null) {
                 subprograms.getOrPut(functionLlvmValue) {
                     diFunctionScope(file(), functionLlvmValue.name!!, startLine, nodebug).also {
@@ -2506,32 +2514,32 @@ internal class CodeGeneratorVisitor(
         return lifetimes.getOrElse(callee) { /* TODO: make IRRELEVANT */ Lifetime.GLOBAL }
     }
 
-    private fun evaluateConstructorCall(callee: IrConstructorCall, args: List<LLVMValueRef>, resultSlot: LLVMValueRef?): LLVMValueRef {
-        context.log{"evaluateConstructorCall        : ${ir2string(callee)}"}
-        return memScoped {
-            val constructedClass = callee.symbol.owner.constructedClass
-            val thisValue = when {
-                constructedClass.isArray -> {
-                    assert(args.isNotEmpty() && args[0].type == llvm.int32Type)
-                    functionGenerationContext.allocArray(constructedClass, args[0],
-                            resultLifetime(callee), currentCodeContext.exceptionHandler, resultSlot = resultSlot)
-                }
-                constructedClass == context.ir.symbols.string.owner -> {
-                    // TODO: consider returning the empty string literal instead.
-                    assert(args.isEmpty())
-                    functionGenerationContext.allocArray(constructedClass, count = llvm.kImmInt32Zero,
-                            lifetime = resultLifetime(callee), exceptionHandler = currentCodeContext.exceptionHandler, resultSlot = resultSlot)
-                }
-
-                constructedClass.isObjCClass() -> error("Call should've been lowered: ${callee.dump()}")
-
-                else -> functionGenerationContext.allocInstance(constructedClass, resultLifetime(callee), resultSlot = resultSlot)
-            }
-            evaluateSimpleFunctionCall(callee.symbol.owner,
-                    listOf(thisValue) + args, Lifetime.IRRELEVANT /* constructor doesn't return anything */)
-            thisValue
-        }
-    }
+//    private fun evaluateConstructorCall(callee: IrConstructorCall, args: List<LLVMValueRef>, resultSlot: LLVMValueRef?): LLVMValueRef {
+//        context.log{"evaluateConstructorCall        : ${ir2string(callee)}"}
+//        return memScoped {
+//            val constructedClass = callee.symbol.owner.constructedClass
+//            val thisValue = when {
+//                constructedClass.isArray -> {
+//                    assert(args.isNotEmpty() && args[0].type == llvm.int32Type)
+//                    functionGenerationContext.allocArray(constructedClass, args[0],
+//                            resultLifetime(callee), currentCodeContext.exceptionHandler, resultSlot = resultSlot)
+//                }
+//                constructedClass == context.ir.symbols.string.owner -> {
+//                    // TODO: consider returning the empty string literal instead.
+//                    assert(args.isEmpty())
+//                    functionGenerationContext.allocArray(constructedClass, count = llvm.kImmInt32Zero,
+//                            lifetime = resultLifetime(callee), exceptionHandler = currentCodeContext.exceptionHandler, resultSlot = resultSlot)
+//                }
+//
+//                constructedClass.isObjCClass() -> error("Call should've been lowered: ${callee.dump()}")
+//
+//                else -> functionGenerationContext.allocInstance(constructedClass, resultLifetime(callee), resultSlot = resultSlot)
+//            }
+//            evaluateSimpleFunctionCall(callee.symbol.owner,
+//                    listOf(thisValue) + args, Lifetime.IRRELEVANT /* constructor doesn't return anything */)
+//            thisValue
+//        }
+//    }
 
     private fun genGetObjCClass(irClass: IrClass): LLVMValueRef {
         return functionGenerationContext.getObjCClass(irClass, currentCodeContext.exceptionHandler)
@@ -2692,27 +2700,27 @@ internal class CodeGeneratorVisitor(
 
     //-------------------------------------------------------------------------//
 
-    private fun delegatingConstructorCall(constructor: IrConstructor, args: List<LLVMValueRef>): LLVMValueRef {
-
-        val constructedClass = functionGenerationContext.constructedClass!!
-        val thisPtr = currentCodeContext.genGetValue(constructedClass.thisReceiver!!, null)
-
-        if (constructor.constructedClass.isExternalObjCClass() || constructor.constructedClass.isAny()) {
-            assert(args.isEmpty())
-            return codegen.theUnitInstanceRef.llvm
-        }
-
-        val thisPtrArgType = constructor.allParameters[0].type.toLLVMType(llvm)
-        val thisPtrArg = if (thisPtr.type == thisPtrArgType) {
-            thisPtr
-        } else {
-            // e.g. when array constructor calls super (i.e. Any) constructor.
-            functionGenerationContext.bitcast(thisPtrArgType, thisPtr)
-        }
-
-        return callDirect(constructor, listOf(thisPtrArg) + args,
-                Lifetime.IRRELEVANT /* no value returned */, null)
-    }
+//    private fun delegatingConstructorCall(constructor: IrConstructor, args: List<LLVMValueRef>): LLVMValueRef {
+//
+//        val constructedClass = functionGenerationContext.constructedClass!!
+//        val thisPtr = currentCodeContext.genGetValue(constructedClass.thisReceiver!!, null)
+//
+//        if (constructor.constructedClass.isExternalObjCClass() || constructor.constructedClass.isAny()) {
+//            assert(args.isEmpty())
+//            return codegen.theUnitInstanceRef.llvm
+//        }
+//
+//        val thisPtrArgType = constructor.allParameters[0].type.toLLVMType(llvm)
+//        val thisPtrArg = if (thisPtr.type == thisPtrArgType) {
+//            thisPtr
+//        } else {
+//            // e.g. when array constructor calls super (i.e. Any) constructor.
+//            functionGenerationContext.bitcast(thisPtrArgType, thisPtr)
+//        }
+//
+//        return callDirect(constructor, listOf(thisPtrArg) + args,
+//                Lifetime.IRRELEVANT /* no value returned */, null)
+//    }
 
     //-------------------------------------------------------------------------//
 

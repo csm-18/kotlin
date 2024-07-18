@@ -533,6 +533,12 @@ internal val ReturnsInsertionPhase = createFileLoweringPhase(
         lowering = ::ReturnsInsertionLowering,
 )
 
+internal val ConstructorsLoweringPhase = createFileLoweringPhase(
+        name = "ConstructorsLowering",
+        description = "Replace constructor calls by (alloc + static call)",
+        lowering = ::ConstructorsLowering,
+)
+
 internal val InlineClassPropertyAccessorsPhase = createFileLoweringPhase(
         name = "InlineClassPropertyAccessorsLowering",
         description = "Inline class property accessors",
