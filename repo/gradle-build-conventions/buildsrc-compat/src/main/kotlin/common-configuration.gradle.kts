@@ -173,6 +173,7 @@ fun Project.configureKotlinCompilationOptions() {
         }
 
         val projectsWithOptInToUnsafeCastFunctionsFromAddToStdLib: List<String> by rootProject.extra
+        val projectsWithOptInToErrorProneFqNamesApi: List<String> by rootProject.extra
 
         tasks.withType<KotlinJvmCompile>().configureEach {
             compilerOptions {
@@ -182,6 +183,9 @@ fun Project.configureKotlinCompilationOptions() {
                 allWarningsAsErrors.set(!kotlinBuildProperties.disableWerror)
                 if (project.path in projectsWithOptInToUnsafeCastFunctionsFromAddToStdLib) {
                     freeCompilerArgs.add("-opt-in=org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction")
+                }
+                if (project.path in projectsWithOptInToErrorProneFqNamesApi) {
+                    freeCompilerArgs.add("-opt-in=org.jetbrains.kotlin.name.ErrorProneFqNamesApi")
                 }
 
                 if (project.path == ":kotlin-util-klib") {

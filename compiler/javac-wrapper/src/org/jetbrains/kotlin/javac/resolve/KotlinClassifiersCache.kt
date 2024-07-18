@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.javac.JavacWrapper
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.structure.*
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -72,6 +73,7 @@ class KotlinClassifiersCache(sourceFiles: Collection<KtFile>,
         }
         if (classId.isNestedClass) {
             classifiers[classId]?.let { return it }
+            @OptIn(ErrorProneFqNamesApi::class)
             val pathSegments = classId.relativeClassName.pathSegments().map { it.asString() }
             val outerClassId = ClassId(classId.packageFqName, Name.identifier(pathSegments.first()))
             var outerClass: JavaClass = kotlinClasses[outerClassId]?.let { createMockKotlinClassifier(it, null, outerClassId) } ?: return null

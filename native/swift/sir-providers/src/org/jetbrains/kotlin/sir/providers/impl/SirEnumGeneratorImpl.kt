@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.sir.providers.impl
 
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.sir.SirEnum
 import org.jetbrains.kotlin.sir.SirModule
@@ -36,11 +37,13 @@ public class SirEnumGeneratorImpl(
     }
 
     private fun createEnum(fqName: FqName, parent: SirMutableDeclarationContainer): SirEnum = createdEnums.getOrPut(fqName) {
+        @OptIn(ErrorProneFqNamesApi::class)
         val enumToCreateName = fqName.pathSegments().last().asString()
         parent.declarations
             .filterIsInstance<SirEnum>().find { it.name == enumToCreateName }
             ?: parent.addChild {
                 buildEnum {
+                    @OptIn(ErrorProneFqNamesApi::class)
                     origin = SirOrigin.Namespace(fqName.pathSegments().map { it.asString() })
                     name = enumToCreateName
                 }

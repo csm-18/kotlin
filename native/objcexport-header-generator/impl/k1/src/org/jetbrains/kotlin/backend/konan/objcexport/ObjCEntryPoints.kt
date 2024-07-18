@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.backend.konan.objcexport
 
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.konan.file.File
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 
@@ -48,6 +49,7 @@ fun File.readObjCEntryPoints(): ObjCEntryPoints =
 
                 /** Convert this fully-qualified name to a pattern path, containing all but last components. */
                 private fun FqName.toObjCPatternPath(): List<String> =
+                    @OptIn(ErrorProneFqNamesApi::class)
                     pathSegments().map { it.asString() }
 
                 /** Convert this fully-qualified name to an explicit pattern. */

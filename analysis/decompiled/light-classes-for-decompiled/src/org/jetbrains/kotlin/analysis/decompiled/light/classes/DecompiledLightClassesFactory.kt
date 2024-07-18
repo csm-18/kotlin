@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.builder.ClsWrapperStubPsiFactory
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtEnumEntry
@@ -50,6 +51,7 @@ object DecompiledLightClassesFactory {
         rootLightClassForDecompiledFile: KtLightClassForDecompiledDeclaration
     ): KtLightClassForDecompiledDeclaration? {
         val relativeFqName = getClassRelativeName(decompiledClassOrObject) ?: return null
+        @OptIn(ErrorProneFqNamesApi::class)
         val iterator = relativeFqName.pathSegments().iterator()
         val base = iterator.next()
 

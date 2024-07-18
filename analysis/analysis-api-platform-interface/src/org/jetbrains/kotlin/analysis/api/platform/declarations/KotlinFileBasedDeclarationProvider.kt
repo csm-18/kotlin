@@ -6,10 +6,7 @@
 package org.jetbrains.kotlin.analysis.api.platform.declarations
 
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
-import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.yieldIfNotNull
@@ -50,6 +47,7 @@ public class KotlinFileBasedDeclarationProvider(public val kotlinFile: KtFile) :
         return sequence {
             val tasks = ArrayDeque<Task>()
 
+            @OptIn(ErrorProneFqNamesApi::class)
             val startingChunks = classId.relativeClassName.pathSegments()
             for (declaration in topLevelDeclarations) {
                 tasks.addLast(Task(startingChunks, declaration))

@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.mpp.*
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.components.ClassicTypeSystemContextForCS
@@ -328,6 +329,7 @@ class ClassicExpectActualMatchingContext(
             getDescriptorsFiltered(DescriptorKindFilter.CLASSIFIERS) { it == name }
                 .filterIsInstance<ClassifierDescriptorWithTypeParameters>()
 
+        @OptIn(ErrorProneFqNamesApi::class)
         val segments = classId.relativeClassName.pathSegments()
         var classifiers = module.getPackage(classId.packageFqName).memberScope.getAllClassifiers(segments.first())
         classifiers = classifiers.applyFilter(moduleFilter)

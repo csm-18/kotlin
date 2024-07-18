@@ -194,6 +194,7 @@ private class StubGenerator(
                 if (isAllUnderClassifierImport || isCallableImport || isEnumEntryImport) continue
 
                 // Qualified name should be valid Java fq-name
+                @OptIn(ErrorProneFqNamesApi::class)
                 val importedFqName = importDirective.importedFqName?.takeIf { it.pathSegments().size > 1 } ?: continue
                 if (!isValidQualifiedName(importedFqName)) continue
                 printWithNoIndent("import ")
@@ -799,6 +800,7 @@ private tailrec fun doesInnerClassNameConflictWithOuter(
 private fun findContainingClassNode(clazz: PsiClass): PsiClass? =
     clazz.parent as? PsiClass
 
+@OptIn(ErrorProneFqNamesApi::class)
 private fun isValidQualifiedName(name: FqName) = name.pathSegments().all { isValidIdentifier(it.asString()) }
 
 private fun isValidIdentifier(name: String): Boolean =

@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.incremental.KotlinLookupLocation
 import org.jetbrains.kotlin.incremental.components.LookupLocation
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
@@ -390,7 +391,7 @@ class QualifiedExpressionResolver(val languageVersionSettings: LanguageVersionSe
     private fun KtImportInfo.ImportContent.asQualifierPartList(): List<QualifierPart> =
         when (this) {
             is KtImportInfo.ImportContent.ExpressionBased -> expression.asQualifierPartList()
-            is KtImportInfo.ImportContent.FqNameBased -> fqName.pathSegments().map { QualifierPart(it) }
+            is KtImportInfo.ImportContent.FqNameBased -> @OptIn(ErrorProneFqNamesApi::class) fqName.pathSegments().map { QualifierPart(it) }
         }
 
     private fun KtExpression.asQualifierPartList(doubleColonLHS: Boolean = false): List<ExpressionQualifierPart> {

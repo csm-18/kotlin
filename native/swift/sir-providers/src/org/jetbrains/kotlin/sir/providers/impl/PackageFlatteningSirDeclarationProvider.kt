@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.sir.providers.impl
 
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.builder.buildTypealias
@@ -66,6 +67,7 @@ public class SirTrampolineDeclarationsProviderImpl(
 }
 
 private fun SirEnum.isNamespace(fqName: FqName): Boolean = (this.origin as? SirOrigin.Namespace)?.path?.let {
+    @OptIn(ErrorProneFqNamesApi::class)
     val path = fqName.pathSegments()
     it.size == path.size && (it zip path).all { it.first == it.second.toString() }
 } ?: false

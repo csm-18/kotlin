@@ -500,6 +500,15 @@ val projectsWithOptInToUnsafeCastFunctionsFromAddToStdLib by extra {
     )
 }
 
+val projectsWithOptInToErrorProneFqNamesApi by extra {
+    listOf(
+        ":analysis:analysis-api-fe10",
+        ":core:descriptors",
+        ":js:js.frontend",
+        ":js:js.translator",
+    )
+}
+
 val gradlePluginProjects = listOf(
     ":kotlin-gradle-plugin",
     ":kotlin-gradle-plugin-api",

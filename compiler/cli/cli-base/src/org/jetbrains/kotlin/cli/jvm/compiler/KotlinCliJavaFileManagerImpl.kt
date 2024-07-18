@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.load.java.structure.impl.classFiles.ClassifierResolu
 import org.jetbrains.kotlin.load.java.structure.impl.classFiles.isNotTopLevelClass
 import org.jetbrains.kotlin.load.java.structure.impl.source.JavaElementSourceFactory
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.resolve.jvm.KotlinCliJavaFileManager
 import org.jetbrains.kotlin.util.PerformanceCounter
@@ -72,6 +73,7 @@ class KotlinCliJavaFileManagerImpl(private val myPsiManager: PsiManager) : CoreJ
 
     private fun findVirtualFileForTopLevelClass(classId: ClassId, searchScope: GlobalSearchScope): VirtualFile? {
         val relativeClassName = classId.relativeClassName.asString()
+        @OptIn(ErrorProneFqNamesApi::class)
         val outerMostClassFqName = classId.packageFqName.child(classId.relativeClassName.pathSegments().first())
         return topLevelClassesCache.getOrPut(outerMostClassFqName) {
             // Search java sources first. For build tools, it makes sense to build new files passing all the

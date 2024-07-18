@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.serialization.Interner
 import org.jetbrains.kotlin.metadata.serialization.StringTable
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.FqName
 
 open class SerializableStringTable : StringTable {
@@ -74,6 +75,7 @@ open class SerializableStringTable : StringTable {
 
     fun getPackageFqNameIndex(fqName: FqName): Int {
         var result = -1
+        @OptIn(ErrorProneFqNamesApi::class)
         for (segment in fqName.pathSegments()) {
             val builder = ProtoBuf.QualifiedNameTable.QualifiedName.newBuilder()
             builder.shortName = getStringIndex(segment.asString())

@@ -35,10 +35,7 @@ import org.jetbrains.kotlin.fir.types.impl.FirImplicitTypeRefImplWithoutSource
 import org.jetbrains.kotlin.fir.types.impl.FirQualifierPartImpl
 import org.jetbrains.kotlin.fir.types.impl.FirTypeArgumentListImpl
 import org.jetbrains.kotlin.fir.toFirResolvedTypeRef
-import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.annotationsForSamWithReceivers
 import org.jetbrains.kotlin.scripting.resolve.KtFileScriptSource
@@ -191,6 +188,7 @@ class FirScriptConfiguratorExtensionImpl(
             val userTypeRef = buildUserTypeRef {
                 isMarkedNullable = false
                 qualifier.addAll(
+                    @OptIn(ErrorProneFqNamesApi::class)
                     classFqn.pathSegments().map {
                         FirQualifierPartImpl(null, it, FirTypeArgumentListImpl(null))
                     }

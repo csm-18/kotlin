@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.FqName
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
@@ -109,6 +110,7 @@ class JvmDependenciesIndexImpl(_roots: List<JavaRoot>) : JvmDependenciesIndex {
 
     private fun <T : Any> search(request: SearchRequest, handler: (VirtualFile, JavaRoot.RootType) -> T?): T? {
         // a list of package sub names, ["org", "jb", "kotlin"]
+        @OptIn(ErrorProneFqNamesApi::class)
         val packagesPath = request.packageFqName.pathSegments().map { it.identifierOrNullIfSpecial ?: return null }
         // a list of caches corresponding to packages, [default, "org", "org.jb", "org.jb.kotlin"]
         val caches = cachesPath(packagesPath)
@@ -169,6 +171,7 @@ class JvmDependenciesIndexImpl(_roots: List<JavaRoot>) : JvmDependenciesIndex {
 
     private fun doTravelPath(rootIndex: Int, packagesPath: List<String>, fillCachesAfter: Int, cachesPath: List<Cache>): VirtualFile? {
         val pathRoot = roots[rootIndex]
+        @OptIn(ErrorProneFqNamesApi::class)
         val prefixPathSegments = pathRoot.prefixFqName?.pathSegments()
 
         var currentFile = pathRoot.file

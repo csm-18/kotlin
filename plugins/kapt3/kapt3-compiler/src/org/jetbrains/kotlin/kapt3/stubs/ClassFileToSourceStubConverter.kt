@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.kapt3.util.*
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.sources.JavaSourceElement
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.isOneSegmentFQN
 import org.jetbrains.kotlin.psi.*
@@ -284,6 +285,7 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
 
         loop@ for (importDirective in sortedImportDirectives) {
             // Qualified name should be valid Java fq-name
+            @OptIn(ErrorProneFqNamesApi::class)
             val importedFqName = importDirective.importedFqName?.takeIf { it.pathSegments().size > 1 } ?: continue
             if (!isValidQualifiedName(importedFqName)) continue
 
@@ -1132,6 +1134,7 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
         return nonErrorType
     }
 
+    @OptIn(ErrorProneFqNamesApi::class)
     private fun isValidQualifiedName(name: FqName) = name.pathSegments().all { isValidIdentifier(it.asString()) }
 
     private fun isValidIdentifier(name: String, canBeConstructor: Boolean = false): Boolean {

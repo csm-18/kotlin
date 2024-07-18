@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.swiftexport.standalone.builders
 
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.sir.*
 import org.jetbrains.kotlin.sir.bridge.*
 import org.jetbrains.kotlin.sir.providers.source.KotlinSource
@@ -38,6 +39,7 @@ internal fun buildBridgeRequests(generator: BridgeGenerator, container: SirDecla
 }
 
 private fun SirFunction.constructBridgeRequests(generator: BridgeGenerator): List<BridgeRequest> {
+    @OptIn(ErrorProneFqNamesApi::class)
     val fqName = ((origin as? KotlinSource)?.symbol as? KaFunctionSymbol)
         ?.callableId?.asSingleFqName()
         ?.pathSegments()?.map { it.toString() }
@@ -49,6 +51,7 @@ private fun SirFunction.constructBridgeRequests(generator: BridgeGenerator): Lis
 }
 
 private fun SirVariable.constructBridgeRequests(generator: BridgeGenerator): List<BridgeRequest> {
+    @OptIn(ErrorProneFqNamesApi::class)
     val fqName = when (val origin = origin) {
         is KotlinSource -> (origin.symbol as? KaVariableSymbol)
             ?.callableId?.asSingleFqName()
@@ -77,6 +80,7 @@ private fun SirInit.constructBridgeRequests(generator: BridgeGenerator): List<Br
         })
         return emptyList()
     }
+    @OptIn(ErrorProneFqNamesApi::class)
     val fqName = ((origin as? KotlinSource)?.symbol as? KaConstructorSymbol)
         ?.containingClassId?.asSingleFqName()
         ?.pathSegments()?.map { it.toString() }

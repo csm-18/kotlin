@@ -42,10 +42,8 @@ import org.jetbrains.kotlin.javac.wrappers.trees.TreeBasedClass
 import org.jetbrains.kotlin.javac.wrappers.trees.TreeBasedPackage
 import org.jetbrains.kotlin.load.java.structure.*
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.isSubpackageOf
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.Closeable
 import java.io.File
@@ -191,6 +189,7 @@ class JavacWrapper(
 
     fun findClass(classId: ClassId, scope: GlobalSearchScope = EverythingGlobalScope()): JavaClass? {
         if (classId.isNestedClass) {
+            @OptIn(ErrorProneFqNamesApi::class)
             val pathSegments = classId.relativeClassName.pathSegments().map { it.asString() }
             val outerClassId = ClassId(classId.packageFqName, Name.identifier(pathSegments.first()))
             var outerClass = findClass(outerClassId, scope) ?: return null

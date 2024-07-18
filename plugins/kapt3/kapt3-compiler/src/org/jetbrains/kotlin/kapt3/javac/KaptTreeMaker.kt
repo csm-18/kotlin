@@ -28,6 +28,7 @@ import com.sun.tools.javac.util.Name
 import com.sun.tools.javac.util.Names
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.kapt3.KaptContextForStubGeneration
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.Type.*
@@ -55,6 +56,7 @@ class KaptTreeMaker(context: Context, kaptContext: KaptContextForStubGeneration)
     }
 
     @Suppress("FunctionName")
+    @OptIn(ErrorProneFqNamesApi::class)
     fun FqName(fqName: FqName) = FqName(fqName.pathSegments().map { it.asString() })
 
     @Suppress("FunctionName")

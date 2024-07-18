@@ -1,5 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
+@file:OptIn(ErrorProneFqNamesApi::class)
+
 package org.jetbrains.kotlin.analysis.decompiler.stub
 
 import com.intellij.psi.PsiElement
@@ -16,10 +18,7 @@ import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.deserialization.TypeTable
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.protobuf.MessageLite
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.stubs.KotlinUserTypeStub

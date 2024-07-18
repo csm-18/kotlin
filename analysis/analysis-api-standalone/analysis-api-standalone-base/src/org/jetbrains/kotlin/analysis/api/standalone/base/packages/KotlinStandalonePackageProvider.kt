@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.platform.packages.createPackageProvider
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinPackageProviderBase
 import org.jetbrains.kotlin.analysis.api.platform.mergeSpecificProviders
 import org.jetbrains.kotlin.analysis.api.platform.packages.KotlinCompositePackageProvider
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
@@ -28,6 +29,7 @@ class KotlinStandalonePackageProvider(
         val packages: MutableMap<FqName, MutableSet<Name>> = mutableMapOf() // the explicit type is here to workaround KTIJ-21172
         filesInScope.forEach { file ->
             var currentPackage = FqName.ROOT
+            @OptIn(ErrorProneFqNamesApi::class)
             for (subPackage in file.packageFqName.pathSegments()) {
                 packages.getOrPut(currentPackage) { mutableSetOf() } += subPackage
                 currentPackage = currentPackage.child(subPackage)
