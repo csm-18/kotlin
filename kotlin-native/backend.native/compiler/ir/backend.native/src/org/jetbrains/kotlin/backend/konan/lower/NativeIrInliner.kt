@@ -21,6 +21,7 @@ internal class NativeIrInliner(
         context = context.context,
         NativeInlineFunctionResolver(context, inlineOnlyPrivateFunctions),
         insertAdditionalImplicitCasts = true,
+        produceOuterThisFields = false,
 ) {
     private val inlineFunctionsSupport = context.context.inlineFunctionsSupport
 
