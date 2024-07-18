@@ -31,6 +31,7 @@ open class IrValidationBeforeLoweringPhase<Context : CommonBackendContext>(conte
             checkTypes = false, // TODO: Re-enable checking types (KT-68663)
             checkValueScopes = true,
             checkTypeParameterScopes = false, // TODO: Re-enable checking out-of-scope type parameter usages (KT-69305)
+            checkCrossFileFieldUsage = true,
             checkVisibilities = context.configuration.getBoolean(CommonConfigurationKeys.ENABLE_IR_VISIBILITY_CHECKS),
         )
     }
@@ -63,6 +64,7 @@ class IrValidationAfterInliningAllFunctionsPhase<Context : CommonBackendContext>
             phaseName,
             checkTypes = false, // TODO: Re-enable checking types (KT-68663)
             checkValueScopes = context.configuration.getBoolean(CommonConfigurationKeys.ENABLE_IR_VISIBILITY_CHECKS_AFTER_INLINING),
+            checkCrossFileFieldUsage = true,
             checkTypeParameterScopes = false,
             checkVisibilities = context.configuration.getBoolean(CommonConfigurationKeys.ENABLE_IR_VISIBILITY_CHECKS_AFTER_INLINING),
             checkInlineFunctionUseSites = checkInlineFunctionCallSites
