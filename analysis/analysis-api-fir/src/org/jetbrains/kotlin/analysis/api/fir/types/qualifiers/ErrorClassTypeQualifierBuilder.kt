@@ -39,7 +39,7 @@ internal object ErrorClassTypeQualifierBuilder {
             )
 
             is ConeUnresolvedSymbolError ->
-                coneDiagnostic.classId.asSingleFqName().pathSegments()
+                coneDiagnostic.classId.asSingleFqName().properPathSegments()
                     .map { KaBaseUnresolvedClassTypeQualifier(it, emptyList(), builder.token) }
 
         }

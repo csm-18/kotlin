@@ -112,7 +112,7 @@ abstract class AbstractFirTypeEnhancementTest : KtUsefulTestCase() {
                                 }?.substringAfter("package")?.trim()?.substringBefore(";")?.let { name ->
                                     FqName(name)
                                 } ?: FqName.ROOT
-                            for (segment in packageFqName.pathSegments()) {
+                            for (segment in packageFqName.properPathSegments()) {
                                 currentDir = File(currentDir, segment.asString()).apply { mkdir() }
                             }
                         }

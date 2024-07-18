@@ -107,7 +107,7 @@ class DeclarationsDumpHandler(
         val packagesNames = testFiles.mapNotNullTo(mutableSetOf()) {
             val ktFile = ktFiles[it]
             when {
-                ktFile != null -> ktFile.packageFqName.pathSegments().firstOrNull() ?: SpecialNames.ROOT_PACKAGE
+                ktFile != null -> ktFile.packageFqName.properPathSegments().firstOrNull() ?: SpecialNames.ROOT_PACKAGE
                 it.isJavaFile -> getJavaFilePackage(it)
                 else -> null
             }
@@ -118,7 +118,7 @@ class DeclarationsDumpHandler(
 
             if (descriptor is PackageViewDescriptor) {
                 val fqName = descriptor.fqName
-                return@Predicate fqName.isRoot || fqName.pathSegments().first() in packagesNames
+                return@Predicate fqName.isRoot || fqName.properPathSegments().first() in packagesNames
             }
 
             if (checkTypeEnabled && descriptor.name in NAMES_OF_CHECK_TYPE_HELPER) return@Predicate false

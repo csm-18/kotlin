@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.name.FqName
 fun findLongestExistingPackage(symbolProvider: FirSymbolProvider, fqName: FqName): PackageAndClass {
     var currentPackage = fqName
 
-    val pathSegments = fqName.pathSegments()
+    val pathSegments = fqName.properPathSegments()
     var prefixSize = pathSegments.size
     while (!currentPackage.isRoot && prefixSize > 0) {
         if (symbolProvider.getPackage(currentPackage) != null) {

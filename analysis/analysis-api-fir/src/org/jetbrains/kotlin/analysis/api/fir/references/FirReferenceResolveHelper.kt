@@ -620,7 +620,7 @@ internal object FirReferenceResolveHelper {
                 qualifiedAccessSegments: List<String>,
             ): Boolean {
                 val referencedClassIdSegments =
-                    referencedClassId.asSingleFqName().pathSegments()
+                    referencedClassId.asSingleFqName().properPathSegments()
                         .takeLast(qualifiedAccessSegments.size)
                         .map { it.identifierOrNullIfSpecial }
                 return referencedClassIdSegments == qualifiedAccessSegments

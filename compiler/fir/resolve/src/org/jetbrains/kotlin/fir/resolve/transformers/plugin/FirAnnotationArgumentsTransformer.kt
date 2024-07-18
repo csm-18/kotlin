@@ -158,7 +158,7 @@ private class FirExpressionTransformerForAnnotationArguments(
     private fun generatePropertyAccessExpression(fqName: FqName, accessSource: KtSourceElement?): FirPropertyAccessExpression {
         var result: FirPropertyAccessExpression? = null
 
-        val pathSegments = fqName.pathSegments()
+        val pathSegments = fqName.properPathSegments()
         for ((index, pathSegment) in pathSegments.withIndex()) {
             result = buildPropertyAccessExpression {
                 calleeReference = buildSimpleNamedReference { name = pathSegment }

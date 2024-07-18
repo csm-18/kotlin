@@ -77,7 +77,7 @@ private fun HEAD.commonHead() {
 
 private class PackageInfo(val fqName: FqName, val moduleInfo: ModuleInfo) {
     val contents = LinkedHashSet<String>()
-    val packageRoot = fqName.pathSegments().fold(moduleInfo.moduleRoot) { dir, segment -> dir.resolve(segment.asString()) }.also {
+    val packageRoot = fqName.properPathSegments().fold(moduleInfo.moduleRoot) { dir, segment -> dir.resolve(segment.asString()) }.also {
         it.mkdirs()
     }
     val errors = mutableMapOf<String, Int>().withDefault { 0 }

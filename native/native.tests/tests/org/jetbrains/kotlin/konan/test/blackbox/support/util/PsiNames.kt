@@ -14,14 +14,14 @@ import org.jetbrains.kotlin.test.services.JUnit5Assertions.assertEquals
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 internal fun FqName.child(child: FqName): FqName =
-    child.pathSegments().fold(this) { accumulator, segment -> accumulator.child(segment) }
+    child.properPathSegments().fold(this) { accumulator, segment -> accumulator.child(segment) }
 
 internal fun List<Name>.fqNameBeforeIndex(toIndexExclusive: Int): FqName =
     if (toIndexExclusive == 0) FqName.ROOT else FqName(subList(0, toIndexExclusive).joinToString("."))
 
 internal fun FqName.removeSuffix(suffix: FqName): FqName {
-    val pathSegments = pathSegments()
-    val suffixPathSegments = suffix.pathSegments()
+    val pathSegments = properPathSegments()
+    val suffixPathSegments = suffix.properPathSegments()
 
     val suffixStart = pathSegments.size - suffixPathSegments.size
     assertEquals(suffixPathSegments, pathSegments.subList(suffixStart, pathSegments.size))

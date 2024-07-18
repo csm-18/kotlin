@@ -1079,7 +1079,7 @@ open class PsiRawFirBuilder(
             if (classOrObjectStub != null) {
                 val parentStub = classOrObjectStub.parentStub
                 if (parentStub !is KotlinFileStub) return false
-                return parentStub.getPackageFqName().pathSegments().singleOrNull() == StandardNames.BUILT_INS_PACKAGE_NAME
+                return parentStub.getPackageFqName().properPathSegments().singleOrNull() == StandardNames.BUILT_INS_PACKAGE_NAME
             } else {
                 if (parent !is KtFile) return false
                 return parent.findDescendantOfType<KtPackageDirective> { packageDirective ->

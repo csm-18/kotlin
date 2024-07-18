@@ -89,7 +89,7 @@ internal object FirElementFinder {
             }
         }
 
-        val classIdPathSegment = containerClassId?.relativeClassName?.pathSegments().orEmpty()
+        val classIdPathSegment = containerClassId?.relativeClassName?.properPathSegments().orEmpty()
         val path = ArrayList<FirDeclaration>(classIdPathSegment.size + 2)
         var result: FirDeclaration? = null
 

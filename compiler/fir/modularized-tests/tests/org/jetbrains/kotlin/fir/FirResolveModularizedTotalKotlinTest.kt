@@ -128,7 +128,7 @@ class FirResolveModularizedTotalKotlinTest : AbstractFrontendModularizedTest() {
         if (!DUMP_FIR) return
         val dumpRoot = File(FIR_DUMP_PATH).resolve(disambiguatedName)
         firFiles.forEach {
-            val directory = it.packageFqName.pathSegments().fold(dumpRoot) { file, name -> file.resolve(name.asString()) }
+            val directory = it.packageFqName.properPathSegments().fold(dumpRoot) { file, name -> file.resolve(name.asString()) }
             directory.mkdirs()
             directory.resolve(it.name + ".fir").writeText(it.render())
         }

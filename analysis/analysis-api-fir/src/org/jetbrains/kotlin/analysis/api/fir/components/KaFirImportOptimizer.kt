@@ -311,7 +311,7 @@ internal class KaFirImportOptimizer(
                                 // import has no receiver for receiver kdoc declaration:
                                 // for receiver case kdoc like `[Foo.bar]`
                                 // import looks like `import a.b.bar`
-                                if (receiverFqName != null && qualifiedNameAsFqName.pathSegments().size > 1) {
+                                if (receiverFqName != null && qualifiedNameAsFqName.properPathSegments().size > 1) {
                                     this += receiverFqName
                                 }
                             }

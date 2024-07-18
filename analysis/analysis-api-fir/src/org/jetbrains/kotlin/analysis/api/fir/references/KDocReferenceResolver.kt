@@ -19,10 +19,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.analysis.utils.printer.parentOfType
 import org.jetbrains.kotlin.analysis.utils.printer.parentsOfType
 import org.jetbrains.kotlin.load.java.possibleGetMethodNames
-import org.jetbrains.kotlin.name.CallableId
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
@@ -73,7 +70,7 @@ internal object KDocReferenceResolver {
                 val parent = fullFqName.parent()
                 return resolveKdocFqName(analysisSession, selectedFqName, parent, contextDeclarationOrSelf)
             }
-            val goBackSteps = fullFqName.pathSegments().size - selectedFqName.pathSegments().size
+            val goBackSteps = fullFqName.properPathSegments().size - selectedFqName.properPathSegments().size
             check(goBackSteps > 0) {
                 "Selected FqName ($selectedFqName) should be smaller than the whole FqName ($fullFqName)"
             }
@@ -165,7 +162,7 @@ internal object KDocReferenceResolver {
         contextElement: KtElement,
     ): Collection<ResolveResult> {
         val owner = contextElement.parentOfType<KtDeclaration>(withSelf = true) ?: return emptyList()
-        if (fqName.pathSegments().singleOrNull()?.asString() == "this") {
+        if (fqName.properPathSegments().singleOrNull()?.asString() == "this") {
             if (owner is KtCallableDeclaration && owner.receiverTypeReference != null) {
                 val symbol = owner.symbol as? KaCallableSymbol ?: return emptyList()
                 return listOfNotNull(symbol.receiverParameter?.toResolveResult())
@@ -221,7 +218,7 @@ internal object KDocReferenceResolver {
     private fun KaSession.getSymbolsFromParentMemberScopes(fqName: FqName, contextElement: KtElement): Collection<KaSymbol> {
         val declaration = PsiTreeUtil.getContextOfType(contextElement, KtDeclaration::class.java, false) ?: return emptyList()
         for (ktDeclaration in declaration.parentsOfType<KtDeclaration>(withSelf = true)) {
-            if (fqName.pathSegments().size == 1) {
+            if (fqName.properPathSegments().size == 1) {
                 getSymbolsFromDeclaration(fqName.shortName(), ktDeclaration).ifNotEmpty { return this }
             }
             if (ktDeclaration is KtClassOrObject) {
@@ -266,7 +263,7 @@ internal object KDocReferenceResolver {
     }
 
     private fun KaSession.getSymbolsFromMemberScope(fqName: FqName, scope: KaScope): Collection<KaDeclarationSymbol> {
-        val finalScope = fqName.pathSegments()
+        val finalScope = fqName.properPathSegments()
             .dropLast(1)
             .fold(scope) { currentScope, fqNamePart ->
                 currentScope
@@ -435,7 +432,7 @@ internal object KDocReferenceResolver {
     }
 
     private fun generateNameInterpretations(fqName: FqName): Sequence<FqNameInterpretation> = sequence {
-        val parts = fqName.pathSegments()
+        val parts = fqName.properPathSegments()
         if (parts.isEmpty()) {
             yield(FqNameInterpretation.create(packageParts = emptyList(), classParts = emptyList(), callable = null))
             return@sequence

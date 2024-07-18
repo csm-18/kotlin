@@ -142,7 +142,7 @@ class LLFirResolveExtensionToolPackageFilter(
 
     private fun MutableMap<FqName, MutableSet<Name>>.collectAllSubPackages(packageName: FqName) {
         var currentPackage = FqName.ROOT
-        for (packagePart in packageName.pathSegments()) {
+        for (packagePart in packageName.properPathSegments()) {
             getOrPut(currentPackage) { mutableSetOf<Name>() }.add(packagePart)
             currentPackage = currentPackage.child(packagePart)
         }

@@ -577,7 +577,7 @@ abstract class AbstractDiagnosticsTest : BaseDiagnosticsTest() {
 
             if (descriptor is PackageViewDescriptor) {
                 val fqName = descriptor.fqName
-                return@Predicate fqName.isRoot || fqName.pathSegments().first() in packagesNames
+                return@Predicate fqName.isRoot || fqName.properPathSegments().first() in packagesNames
             }
 
             if (checkTypeEnabled && descriptor.name in NAMES_OF_CHECK_TYPE_HELPER) return@Predicate false
@@ -592,7 +592,7 @@ abstract class AbstractDiagnosticsTest : BaseDiagnosticsTest() {
 
     private fun getTopLevelPackagesFromFileList(files: List<KtFile>): Set<Name> =
         files.mapTo(LinkedHashSet<Name>()) { file ->
-            file.packageFqName.pathSegments().firstOrNull() ?: SpecialNames.ROOT_PACKAGE
+            file.packageFqName.properPathSegments().firstOrNull() ?: SpecialNames.ROOT_PACKAGE
         }
 
     private fun createModules(
