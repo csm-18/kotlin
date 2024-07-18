@@ -12,14 +12,16 @@ import org.gradle.api.internal.project.ProjectInternal
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.dsl.multiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.AppleTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.appleTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.tasks.BuildSPMSwiftExportPackage
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.tasks.MergeStaticLibrariesTask
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.tasks.SwiftExportTask
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.tasks.swiftExportedModules
+import org.jetbrains.kotlin.gradle.plugin.mpp.internal
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
-import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
 import org.jetbrains.kotlin.gradle.unitTests.utils.applyEmbedAndSignEnvironment
 import org.jetbrains.kotlin.gradle.util.*
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
@@ -42,8 +44,8 @@ class SwiftExportUnitTests {
         val mainCompilation = compilations.main
         val swiftExportCompilation = compilations.swiftExport
 
-        val mainCompileTask = mainCompilation.compileTaskProvider.get() as KotlinNativeCompile
-        val swiftExportCompileTask = swiftExportCompilation.compileTaskProvider.get() as KotlinNativeCompile
+        val mainCompileTask = mainCompilation.compileTaskProvider.get()
+        val swiftExportCompileTask = swiftExportCompilation.compileTaskProvider.get()
 
         // Main compilation exist
         assertNotNull(mainCompilation)
@@ -132,6 +134,7 @@ class SwiftExportUnitTests {
         val mergeTask = project.tasks.withType(MergeStaticLibrariesTask::class.java).single()
         val linkTask = mergeTask.taskDependencies.getDependencies(null).filterIsInstance<KotlinNativeLink>().single()
 
+        assertEquals(linkTask.binary.buildType, buildType)
         assertEquals(linkTask.konanTarget, arm64SimLib.konanTarget)
     }
 
@@ -204,6 +207,40 @@ class SwiftExportUnitTests {
             "Build SPM task name doesn't match expected prefix $iosX64Prefix"
         )
     }
+
+    @Test
+    fun `test swift export exported modules`() {
+        Assume.assumeTrue("macOS host required for this test", HostManager.hostIsMac)
+        val targets: KotlinMultiplatformExtension.() -> List<KotlinNativeTarget> = { listOf(iosSimulatorArm64()) }
+        val project = buildProject(
+            projectBuilder = {
+                withName("shared")
+            },
+        )
+        val subproject = project.subProject("subproject", targets)
+        project.setupForSwiftExport(targets = targets) {
+            sourceSets.commonMain {
+                dependencies {
+                    implementation(project(":${subproject.name}"))
+                }
+            }
+        }
+
+        listOf(project, subproject).forEach { it.evaluate() }
+
+        val compilations = project.multiplatformExtension.iosSimulatorArm64().compilations
+        val compileConfiguration = compilations.main.internal.configurations.compileDependencyConfiguration.name
+
+        val swiftExportTask = project.tasks.withType(SwiftExportTask::class.java).single()
+        val configuration = swiftExportTask.configuration.get()
+
+        assertEquals("LazyResolvedConfiguration(configuration='$compileConfiguration')", configuration.toString())
+
+        val module = configuration.swiftExportedModules().single()
+
+        assertEquals(module.moduleName, "Subproject")
+        assertEquals(module.artifact.name, "subproject.klib")
+    }
 }
 
 private fun swiftExportProject(
@@ -223,6 +260,45 @@ private fun swiftExportProject(
     code = {
         repositories.mavenLocal()
         kotlin { targets() }
+    }
+)
+
+private fun ProjectInternal.setupForSwiftExport(
+    configuration: String = "DEBUG",
+    sdk: String = "iphonesimulator",
+    archs: String = "arm64",
+    targets: KotlinMultiplatformExtension.() -> List<KotlinNativeTarget> = { listOf(iosSimulatorArm64()) },
+    code: KotlinMultiplatformExtension.() -> Unit = {},
+) {
+    enableSwiftExport()
+    applyEmbedAndSignEnvironment(
+        configuration = configuration,
+        sdk = sdk,
+        archs = archs,
+    )
+    applyMultiplatformPlugin()
+    repositories.mavenLocal()
+    kotlin {
+        targets.invoke(this).forEach {
+            it.binaries.framework()
+        }
+
+        code.invoke(this)
+    }
+}
+
+private fun ProjectInternal.subProject(
+    name: String,
+    targets: KotlinMultiplatformExtension.() -> List<KotlinNativeTarget> = { listOf(iosSimulatorArm64()) }
+): ProjectInternal = buildProjectWithMPP(
+    projectBuilder = {
+        withParent(this@subProject)
+        withName(name)
+    },
+    code = {
+        kotlin {
+            targets.invoke(this)
+        }
     }
 )
 
