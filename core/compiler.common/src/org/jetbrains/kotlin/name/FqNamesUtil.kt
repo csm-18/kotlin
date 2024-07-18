@@ -5,6 +5,9 @@
 
 package org.jetbrains.kotlin.name
 
+@RequiresOptIn("This API is prone to errors and should be avoided in new code")
+annotation class ErrorProneFqNamesApi
+
 fun FqName.isSubpackageOf(packageName: FqName): Boolean {
     return when {
         this == packageName -> true

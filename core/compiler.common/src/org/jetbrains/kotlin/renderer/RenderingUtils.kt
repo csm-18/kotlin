@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.renderer
 
+import org.jetbrains.kotlin.name.ErrorProneFqNamesApi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.name.Name
@@ -32,10 +33,12 @@ private fun Name.shouldBeEscaped(): Boolean {
             !Character.isJavaIdentifierStart(string.codePointAt(0))
 }
 
+@OptIn(ErrorProneFqNamesApi::class)
 fun FqNameUnsafe.render(): String {
     return renderFqName(pathSegments())
 }
 
+@OptIn(ErrorProneFqNamesApi::class)
 fun FqName.render(): String {
     return renderFqName(pathSegments())
 }

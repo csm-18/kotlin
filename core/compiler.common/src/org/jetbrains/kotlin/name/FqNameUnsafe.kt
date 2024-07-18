@@ -127,6 +127,7 @@ class FqNameUnsafe {
     /**
      * Consider using [properPathSegments].
      */
+    @ErrorProneFqNamesApi
     fun pathSegments(): List<Name> {
         return if (isRoot) emptyList() else SPLIT_BY_DOTS.split(fqName).map(STRING_TO_NAME)
     }

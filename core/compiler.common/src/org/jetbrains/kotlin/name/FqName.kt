@@ -62,6 +62,7 @@ class FqName {
     /**
      * Consider using [properPathSegments].
      */
+    @ErrorProneFqNamesApi
     fun pathSegments(): List<Name> {
         return fqName.pathSegments()
     }
