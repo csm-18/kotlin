@@ -10,6 +10,7 @@ import kotlinx.cinterop.toKString
 import llvm.*
 import org.jetbrains.kotlin.backend.konan.*
 import org.jetbrains.kotlin.backend.konan.Context
+import org.jetbrains.kotlin.backend.konan.lower.constructor
 import org.jetbrains.kotlin.descriptors.konan.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.util.*
@@ -163,11 +164,16 @@ internal interface ContextUtils : RuntimeAware {
         return !generationState.llvmModuleSpecification.containsDeclaration(declaration)
     }
 
-    fun linkageOf(irFunction: IrFunction) = when {
-        isExternal(irFunction) -> LLVMLinkage.LLVMExternalLinkage
-        irFunction.isExported() -> LLVMLinkage.LLVMExternalLinkage
-        context.config.producePerFileCache && irFunction in generationState.calledFromExportedInlineFunctions -> LLVMLinkage.LLVMExternalLinkage
-        else -> LLVMLinkage.LLVMInternalLinkage
+    fun linkageOf(irFunction: IrFunction): LLVMLinkage {
+        if (isExternal(irFunction) || irFunction.isExported())
+            return LLVMLinkage.LLVMExternalLinkage
+        if (context.config.producePerFileCache) {
+            val originalFunction = (irFunction as? IrSimpleFunction)?.constructor ?: irFunction
+            if (originalFunction in generationState.calledFromExportedInlineFunctions)
+                return LLVMLinkage.LLVMExternalLinkage
+        }
+
+        return LLVMLinkage.LLVMInternalLinkage
     }
 
     /**

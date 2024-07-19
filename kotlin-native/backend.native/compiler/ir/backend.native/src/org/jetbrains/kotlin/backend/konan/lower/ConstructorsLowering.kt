@@ -34,17 +34,72 @@ import org.jetbrains.kotlin.utils.addToStdlib.getOrSetIfNull
 internal var IrConstructor.constructorImplFunction: IrSimpleFunction? by irAttribute(followAttributeOwner = false)
 internal var IrSimpleFunction.constructor: IrConstructor? by irAttribute(followAttributeOwner = false)
 
-internal val IrFunction.thisOrImplForConstructor: IrSimpleFunction
-    get() = when (this) {
-        is IrSimpleFunction -> this
-        is IrConstructor -> this.constructorImplFunction!!
+internal fun Context.getConstructorImpl(irConstructor: IrConstructor): IrSimpleFunction {
+    /*
+ * class A<T> constructor(x: T) {
+ *     val x: T = x
+ * }
+ *
+ * transforms to
+ *
+ * class A<T> {
+ *     val x: T
+ *
+ *     fun <T> <init>(inst: A<T>, x: T) {
+ *         inst.x = x
+ *     }
+ * }
+ */
+    return irConstructor::constructorImplFunction.getOrSetIfNull {
+        irFactory.buildFun {
+            name = irConstructor.name
+            startOffset = irConstructor.startOffset
+            endOffset = irConstructor.endOffset
+            visibility = irConstructor.visibility
+            isExternal = irConstructor.isExternal
+            returnType = irBuiltIns.unitType
+        }.apply {
+            val function = this
+            val parentClass = irConstructor.parentAsClass
+            parent = parentClass
+            constructor = irConstructor
+
+            // TODO: Do we actually need to copy type parameters from the parent class?
+//                    typeParameters = copyTypeParametersFrom(parentClass)
+//                    val map = makeTypeParameterSubstitutionMap(parentClass, function)
+//
+//                    addDispatchReceiver {
+//                        startOffset = parentClass.startOffset
+//                        endOffset = parentClass.startOffset
+//                        type = parentClass.defaultType.substitute(map)
+//                    }
+//
+//                    valueParameters = irConstructor.valueParameters.map { it.copyTo(function, type = it.type.substitute(map)) }
+
+//                    typeParameters = parentClass.typeParameters
+
+            addDispatchReceiver {
+                startOffset = parentClass.startOffset
+                endOffset = parentClass.startOffset
+                type = parentClass.defaultType
+            }
+
+            val outerReceiverParameter = irConstructor.dispatchReceiverParameter
+            valueParameters = if (outerReceiverParameter == null)
+                irConstructor.valueParameters.map { it.copyTo(function, type = it.type) }
+            else {
+                require(parentClass.isInner) { "Expected an inner class: ${parentClass.render()}" }
+                listOf(outerReceiverParameter.copyTo(
+                        function, index = 0, name = Name.identifier("\$outer"), type = outerReceiverParameter.type)
+                ) + irConstructor.valueParameters.map { it.copyTo(function, index = it.index + 1, type = it.type) }
+            }
+        }
     }
+}
 
 internal val LOWERED_DELEGATING_CONSTRUCTOR_CALL by IrStatementOriginImpl
 
 internal class ConstructorsLowering(private val context: Context) : FileLoweringPass, IrElementTransformer<IrDeclaration?> {
-    private val irFactory = context.irFactory
-    private val irBuiltIns = context.irBuiltIns
     private val createUninitializedInstance = context.ir.symbols.createUninitializedInstance
     private val createUninitializedArray = context.ir.symbols.createUninitializedArray
     private val initInstance = context.ir.symbols.initInstance
@@ -63,7 +118,7 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
         val constructedClass = declaration.constructedClass
         if (declaration.isObjCConstructor || constructedClass.isInlined()) return declaration
 
-        val implFunction = getConstructorImplFunction(declaration)
+        val implFunction = context.getConstructorImpl(declaration)
         val body = declaration.body
         if (body != null) {
             // TODO: Should we set the constructor's body to null?
@@ -104,7 +159,7 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
                         val callee = expression.symbol.owner
                         if (callee.constructedClass.isAny() || callee.constructedClass.isExternalObjCClass())
                             irComposite { }
-                        else irCall(getConstructorImplFunction(callee), origin = LOWERED_DELEGATING_CONSTRUCTOR_CALL).apply {
+                        else irCall(this@ConstructorsLowering.context.getConstructorImpl(callee), origin = LOWERED_DELEGATING_CONSTRUCTOR_CALL).apply {
                             dispatchReceiver = irGet(implFunction.dispatchReceiverParameter!!)
                             fillArgumentsFrom(expression)
                         }
@@ -121,7 +176,7 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
         // TODO: If wrapped in IMPLICIT_COERCION_TO_UNIT, no temp is needed.
         val constructor = expression.symbol.owner
         val constructedType = constructor.constructedClassType
-        val implFunction = getConstructorImplFunction(constructor)
+        val implFunction = context.getConstructorImpl(constructor)
         val irBuilder = context.createIrBuilder(data!!.symbol, expression.startOffset, expression.endOffset)
         return when {
             constructor.constructedClass.isArray -> {
@@ -155,7 +210,7 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
 
         val instance = expression.getValueArgument(0)
         val constructorCall = expression.getValueArgument(1) as IrConstructorCall
-        val implFunction = getConstructorImplFunction(constructorCall.symbol.owner)
+        val implFunction = context.getConstructorImpl(constructorCall.symbol.owner)
         val irBuilder = context.createIrBuilder(data!!.symbol, expression.startOffset, expression.endOffset)
         return irBuilder.irCall(implFunction).apply {
             dispatchReceiver = instance
@@ -181,66 +236,4 @@ internal class ConstructorsLowering(private val context: Context) : FileLowering
 //            putTypeArgument(it, callSite.getTypeArgument(it))
 //        }
     }
-
-    /*
-     * class A<T> constructor(x: T) {
-     *     val x: T = x
-     * }
-     *
-     * transforms to
-     *
-     * class A<T> {
-     *     val x: T
-     *
-     *     fun <T> <init>(inst: A<T>, x: T) {
-     *         inst.x = x
-     *     }
-     * }
-     */
-    private fun getConstructorImplFunction(irConstructor: IrConstructor): IrSimpleFunction =
-            irConstructor::constructorImplFunction.getOrSetIfNull {
-                irFactory.buildFun {
-                    name = irConstructor.name
-                    startOffset = irConstructor.startOffset
-                    endOffset = irConstructor.endOffset
-                    visibility = irConstructor.visibility
-                    isExternal = irConstructor.isExternal
-                    returnType = irBuiltIns.unitType
-                }.apply {
-                    val function = this
-                    val parentClass = irConstructor.parentAsClass
-                    parent = parentClass
-                    constructor = irConstructor
-
-                    // TODO: Do we actually need to copy type parameters from the parent class?
-//                    typeParameters = copyTypeParametersFrom(parentClass)
-//                    val map = makeTypeParameterSubstitutionMap(parentClass, function)
-//
-//                    addDispatchReceiver {
-//                        startOffset = parentClass.startOffset
-//                        endOffset = parentClass.startOffset
-//                        type = parentClass.defaultType.substitute(map)
-//                    }
-//
-//                    valueParameters = irConstructor.valueParameters.map { it.copyTo(function, type = it.type.substitute(map)) }
-
-//                    typeParameters = parentClass.typeParameters
-
-                    addDispatchReceiver {
-                        startOffset = parentClass.startOffset
-                        endOffset = parentClass.startOffset
-                        type = parentClass.defaultType
-                    }
-
-                    val outerReceiverParameter = irConstructor.dispatchReceiverParameter
-                    valueParameters = if (outerReceiverParameter == null)
-                        irConstructor.valueParameters.map { it.copyTo(function, type = it.type) }
-                    else {
-                        require(parentClass.isInner) { "Expected an inner class: ${parentClass.render()}" }
-                        listOf(outerReceiverParameter.copyTo(
-                            function, index = 0, name = Name.identifier("\$outer"), type = outerReceiverParameter.type)
-                        ) + irConstructor.valueParameters.map { it.copyTo(function, index = it.index + 1, type = it.type) }
-                    }
-                }
-            }
 }

@@ -15,9 +15,8 @@ import org.jetbrains.kotlin.backend.konan.ir.KonanSymbols
 import org.jetbrains.kotlin.backend.konan.llvm.*
 import org.jetbrains.kotlin.backend.konan.llvm.objc.ObjCCodeGenerator
 import org.jetbrains.kotlin.backend.konan.llvm.objc.ObjCDataGenerator
-import org.jetbrains.kotlin.backend.konan.lower.constructorImplFunction
+import org.jetbrains.kotlin.backend.konan.lower.getConstructorImpl
 import org.jetbrains.kotlin.backend.konan.lower.getObjectClassInstanceFunction
-import org.jetbrains.kotlin.backend.konan.lower.thisOrImplForConstructor
 import org.jetbrains.kotlin.backend.konan.objcexport.*
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
@@ -936,7 +935,7 @@ private fun ObjCExportCodeGenerator.generateObjCImp(
         val llvmCallable = if (isVirtual) {
             codegen.getVirtualFunctionTrampoline(target as IrSimpleFunction)
         } else {
-            codegen.llvmFunction(target.thisOrImplForConstructor)
+            codegen.llvmFunction(target as? IrSimpleFunction ?: context.getConstructorImpl(target as IrConstructor))
         }
         call(llvmCallable, args, resultLifetime, exceptionHandler)
     }
@@ -1141,7 +1140,7 @@ private fun ObjCExportCodeGenerator.generateObjCImpForArrayConstructor(
         target: IrConstructor,
         methodBridge: MethodBridge
 ): LlvmCallable {
-    val targetImpl = target.constructorImplFunction!!
+    val targetImpl = context.getConstructorImpl(target)
     return generateObjCImp(methodBridge, bridgeSuffix = targetImpl.computeSymbolName(), isDirect = true) { args, resultLifetime, exceptionHandler ->
         val arrayInstance = callFromBridge(
                 llvm.allocArrayFunction,
