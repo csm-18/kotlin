@@ -922,6 +922,19 @@ object KotlinToolingDiagnostics {
         )
     }
 
+    object ExperimentalFeatureWarning : ToolingDiagnosticFactory(WARNING) {
+        operator fun invoke(featureName: String, youtrackUrl: String) = build(
+            """
+                ⚠️ Experimental Feature Notice ⚠️
+
+                $featureName is an experimental feature and subject to changes in future releases.
+                It may not function as expected and can contain known and unknown bugs. Use it at your own risk.
+
+                Thank you for your understanding and we would appreciate your feedback on it in YouTrack ($youtrackUrl).
+            """.trimIndent()
+        )
+    }
+
     object DeprecatedGradleProperties : ToolingDiagnosticFactory(WARNING) {
         operator fun invoke(usedDeprecatedProperty: String): ToolingDiagnostic {
             return build(
