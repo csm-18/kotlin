@@ -215,7 +215,7 @@ abstract class InventNamesForLocalClasses(private val generateNamesForRegenerate
                 declaration.acceptChildren(this, data.copy(isLocal = true))
                 return
             }
-            if (declaration.isSuspend && declaration.body != null && declaration.origin != IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA) {
+            if (declaration.isSuspendNonLocal()) {
                 // Suspend functions have a continuation, which is essentially a local class
                 val newData = data.appendName(declaration)
                 val internalName = newData.appendName(null).buildAndSanitize()
@@ -236,10 +236,14 @@ abstract class InventNamesForLocalClasses(private val generateNamesForRegenerate
             declaration.acceptChildren(this, data.copy(isLocal = true))
         }
 
+        private fun IrDeclaration?.isSuspendNonLocal(): Boolean {
+            return this is IrSimpleFunction && isSuspend && body != null && origin != IrDeclarationOrigin.LOCAL_FUNCTION_FOR_LAMBDA
+        }
+
         private fun NameBuilder.appendName(declaration: IrDeclarationWithName?): NameBuilder {
             val name = declaration?.name
             val enclosingName = build()
-            check(parent != null) {
+            check(parent != null || declaration.isSuspendNonLocal()) {
                 """
                     There should be at least one name in the stack for every local declaration that needs a name
                     Source name: $name
