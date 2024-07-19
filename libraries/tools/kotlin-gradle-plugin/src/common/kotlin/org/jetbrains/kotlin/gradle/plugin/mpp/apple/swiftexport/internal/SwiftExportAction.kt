@@ -34,7 +34,9 @@ internal abstract class SwiftExportAction : WorkAction<SwiftExportWorkParameters
     override fun execute() {
 
         val exportModules = parameters.swiftModules.get().map { module ->
-            module.toInputModule(config())
+            module.toInputModule { flattenPackage ->
+                config(flattenPackage)
+            }
         }.toSet()
 
         val modules = GradleSwiftExportModules(
@@ -47,13 +49,15 @@ internal abstract class SwiftExportAction : WorkAction<SwiftExportWorkParameters
         File(path).writeText(json)
     }
 
-    private fun config(): SwiftExportConfig {
+    private fun config(flattenPackage: String?): SwiftExportConfig {
         return SwiftExportConfig(
-            settings = mapOf(
+            settings = mutableMapOf(
                 SwiftExportConfig.STABLE_DECLARATIONS_ORDER to parameters.stableDeclarationsOrder.getOrElse(true).toString(),
                 SwiftExportConfig.BRIDGE_MODULE_NAME to parameters.bridgeModuleName.getOrElse(SwiftExportConfig.DEFAULT_BRIDGE_MODULE_NAME),
-                SwiftExportConfig.RENDER_DOC_COMMENTS to parameters.renderDocComments.getOrElse(false).toString()
-            ),
+                SwiftExportConfig.RENDER_DOC_COMMENTS to parameters.renderDocComments.getOrElse(false).toString(),
+            ).also { settings ->
+                flattenPackage?.let { settings[SwiftExportConfig.ROOT_PACKAGE] = it }
+            },
             logger = Companion,
             distribution = parameters.konanDistribution.get(),
             outputPath = parameters.outputPath.getFile().toPath()
@@ -74,11 +78,11 @@ internal fun Set<SwiftExportModule>.toPlainList(): List<GradleSwiftExportModule>
     return modules
 }
 
-private fun SwiftExportedModule.toInputModule(config: SwiftExportConfig): InputModule {
+private fun SwiftExportedModule.toInputModule(config: (String?) -> SwiftExportConfig): InputModule {
     return InputModule(
         name = moduleName,
         path = artifact.toPath(),
-        config = config
+        config = config(flattenPackage)
     )
 }
 

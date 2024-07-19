@@ -10,5 +10,6 @@ import java.io.Serializable
 
 internal data class SwiftExportedModule(
     val moduleName: String,
+    val flattenPackage: String?,
     val artifact: File,
 ) : Serializable
