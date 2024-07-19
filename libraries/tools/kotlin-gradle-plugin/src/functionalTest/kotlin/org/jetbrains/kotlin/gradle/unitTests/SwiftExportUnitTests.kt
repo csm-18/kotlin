@@ -4,6 +4,7 @@
  */
 
 @file:Suppress("FunctionName")
+@file:OptIn(ExperimentalSwiftExportDsl::class)
 
 package org.jetbrains.kotlin.gradle.unitTests
 
@@ -16,17 +17,18 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.AppleTarget
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.appleTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftExportDSLConstants
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.SwiftExportExtension
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.tasks.BuildSPMSwiftExportPackage
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.tasks.MergeStaticLibrariesTask
 import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.tasks.SwiftExportTask
-import org.jetbrains.kotlin.gradle.plugin.mpp.apple.swiftexport.tasks.swiftExportedModules
-import org.jetbrains.kotlin.gradle.plugin.mpp.internal
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeLink
 import org.jetbrains.kotlin.gradle.unitTests.utils.applyEmbedAndSignEnvironment
 import org.jetbrains.kotlin.gradle.util.*
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
+import org.jetbrains.kotlin.swiftexport.ExperimentalSwiftExportDsl
 import org.junit.Assume
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -82,10 +84,10 @@ class SwiftExportUnitTests {
         val linkSwiftExportBinaryTask = project.tasks.getByName("linkSwiftExportBinaryDebugStaticIosSimulatorArm64")
         val mergeLibrariesTask = project.tasks.getByName("mergeIosSimulatorDebugSwiftExportLibraries")
         val copySwiftExportTask = project.tasks.getByName("copyDebugSPMIntermediates")
-        val embedAndSignTask = project.tasks.getByName("embedAndSignAppleFrameworkForXcode")
+        val embedSwiftExportTask = project.tasks.getByName("embedSwiftExportForXcode")
 
         // Check embedAndSign task dependencies
-        val embedAndSignTaskDependencies = embedAndSignTask.taskDependencies.getDependencies(null)
+        val embedAndSignTaskDependencies = embedSwiftExportTask.taskDependencies.getDependencies(null)
         assert(embedAndSignTaskDependencies.contains(copySwiftExportTask))
 
         // Check copySwiftExport task dependencies
@@ -112,16 +114,14 @@ class SwiftExportUnitTests {
     fun `test swift export missing arch`() {
         Assume.assumeTrue("macOS host required for this test", HostManager.hostIsMac)
         val project = swiftExportProject(archs = "arm64", targets = {
-            listOf(iosSimulatorArm64(), iosX64(), iosArm64()).forEach {
-                it.binaries.framework()
-            }
+            listOf(iosSimulatorArm64(), iosX64(), iosArm64())
         })
 
         project.evaluate()
 
-        val embedAndSignTask = project.tasks.getByName("embedAndSignAppleFrameworkForXcode")
+        val embedSwiftExportTask = project.tasks.getByName("embedSwiftExportForXcode")
 
-        val buildType = embedAndSignTask.inputs.properties["type"] as NativeBuildType
+        val buildType = embedSwiftExportTask.inputs.properties["type"] as NativeBuildType
 
         val arm64SimLib = project.multiplatformExtension.iosSimulatorArm64().binaries.findStaticLib("SwiftExportBinary", buildType)
         val arm64Lib = project.multiplatformExtension.iosArm64().binaries.findStaticLib("SwiftExportBinary", buildType)
@@ -142,14 +142,12 @@ class SwiftExportUnitTests {
     fun `test swift export embed and sign inputs`() {
         Assume.assumeTrue("macOS host required for this test", HostManager.hostIsMac)
         val project = swiftExportProject(archs = "arm64 x86_64", targets = {
-            listOf(iosSimulatorArm64(), iosX64()).forEach {
-                it.binaries.framework()
-            }
+            listOf(iosSimulatorArm64(), iosX64())
         })
 
         project.evaluate()
 
-        val embedAndSignTask = project.tasks.getByName("embedAndSignAppleFrameworkForXcode")
+        val embedAndSignTask = project.tasks.getByName("embedSwiftExportForXcode")
 
         @Suppress("UNCHECKED_CAST")
         val targets = embedAndSignTask.inputs.properties["targets"] as List<KonanTarget>
@@ -219,24 +217,32 @@ class SwiftExportUnitTests {
         )
         val subproject = project.subProject("subproject", targets)
         project.setupForSwiftExport(targets = targets) {
-            sourceSets.commonMain {
-                dependencies {
-                    implementation(project(":${subproject.name}"))
-                }
+            swiftexport {
+                export(subproject)
             }
         }
 
         listOf(project, subproject).forEach { it.evaluate() }
 
-        val compilations = project.multiplatformExtension.iosSimulatorArm64().compilations
-        val compileConfiguration = compilations.main.internal.configurations.compileDependencyConfiguration.name
+        val embedSwiftExportTask = project.tasks.getByName("embedSwiftExportForXcode")
+        val buildType = embedSwiftExportTask.inputs.properties["type"] as NativeBuildType
+        val arm64SimLib = project.multiplatformExtension.iosSimulatorArm64().binaries.findStaticLib(
+            SwiftExportDSLConstants.SWIFT_EXPORT_LIBRARY_PREFIX,
+            buildType
+        )
+
+        assertNotNull(arm64SimLib)
 
         val swiftExportTask = project.tasks.withType(SwiftExportTask::class.java).single()
         val configuration = swiftExportTask.configuration.get()
 
-        assertEquals("LazyResolvedConfiguration(configuration='$compileConfiguration')", configuration.toString())
+        assertEquals("LazyResolvedConfiguration(configuration='${arm64SimLib.exportConfigurationName}')", configuration.toString())
 
-        val module = configuration.swiftExportedModules().single()
+        // Filter main module
+        val module = swiftExportTask.swiftExportedModules().get().single {
+            it.moduleName != swiftExportTask.mainModuleInput.moduleName.get() &&
+                    it.artifact != swiftExportTask.mainModuleInput.artifact.get()
+        }
 
         assertEquals(module.moduleName, "Subproject")
         assertEquals(module.artifact.name, "subproject.klib")
@@ -247,7 +253,8 @@ private fun swiftExportProject(
     configuration: String = "DEBUG",
     sdk: String = "iphonesimulator",
     archs: String = "arm64",
-    targets: KotlinMultiplatformExtension.() -> Unit = { iosSimulatorArm64().binaries.framework() },
+    targets: KotlinMultiplatformExtension.() -> List<KotlinNativeTarget> = { listOf(iosSimulatorArm64()) },
+    swiftExport: SwiftExportExtension.() -> Unit = {}
 ): ProjectInternal = buildProjectWithMPP(
     preApplyCode = {
         applyEmbedAndSignEnvironment(
@@ -259,7 +266,12 @@ private fun swiftExportProject(
     },
     code = {
         repositories.mavenLocal()
-        kotlin { targets() }
+        kotlin {
+            targets()
+            swiftexport {
+                swiftExport()
+            }
+        }
     }
 )
 
@@ -279,17 +291,14 @@ private fun ProjectInternal.setupForSwiftExport(
     applyMultiplatformPlugin()
     repositories.mavenLocal()
     kotlin {
-        targets.invoke(this).forEach {
-            it.binaries.framework()
-        }
-
-        code.invoke(this)
+        targets()
+        code()
     }
 }
 
 private fun ProjectInternal.subProject(
     name: String,
-    targets: KotlinMultiplatformExtension.() -> List<KotlinNativeTarget> = { listOf(iosSimulatorArm64()) }
+    targets: KotlinMultiplatformExtension.() -> List<KotlinNativeTarget> = { listOf(iosSimulatorArm64()) },
 ): ProjectInternal = buildProjectWithMPP(
     projectBuilder = {
         withParent(this@subProject)
@@ -297,7 +306,7 @@ private fun ProjectInternal.subProject(
     },
     code = {
         kotlin {
-            targets.invoke(this)
+            targets()
         }
     }
 )
