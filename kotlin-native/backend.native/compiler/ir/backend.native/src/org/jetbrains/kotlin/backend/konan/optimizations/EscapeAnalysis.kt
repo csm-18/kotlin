@@ -23,13 +23,25 @@ import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.util.constructedClass
 import org.jetbrains.kotlin.ir.util.getAllSuperclasses
 
+/*
+class A(val s: String)
+
+fun foo(x: Int) {
+    val a = A(x.toString())
+    println(a.toString()) <- a escapes for some reason?!
+}
+
+fun main() = foo(42)
+ */
+
 private val DataFlowIR.Node.isAlloc
-    get() = this is DataFlowIR.Node.NewObject || this is DataFlowIR.Node.AllocInstance
+    get() = this is DataFlowIR.Node.AllocInstance || this is DataFlowIR.Node.AllocArray
 
 private val DataFlowIR.Node.ir
     get() = when (this) {
         is DataFlowIR.Node.Call -> irCallSite
         is DataFlowIR.Node.AllocInstance -> irCallSite
+        is DataFlowIR.Node.AllocArray -> irCallSite
         is DataFlowIR.Node.ArrayRead -> irCallSite
         is DataFlowIR.Node.FieldRead -> ir
         else -> null
@@ -37,14 +49,8 @@ private val DataFlowIR.Node.ir
 
 private val CallGraphNode.CallSite.arguments: List<DataFlowIR.Node>
     get() {
-        return if (call is DataFlowIR.Node.NewObject) {
-            (0..call.arguments.size).map {
-                if (it == 0) node else call.arguments[it - 1].node
-            }
-        } else {
-            (0..call.arguments.size).map {
-                if (it < call.arguments.size) call.arguments[it].node else node
-            }
+        return (0..call.arguments.size).map {
+            if (it < call.arguments.size) call.arguments[it].node else node
         }
     }
 
@@ -914,6 +920,7 @@ internal object EscapeAnalysis {
                             }
                         }
                         is DataFlowIR.Node.AllocInstance,
+                        is DataFlowIR.Node.AllocArray,
                         is DataFlowIR.Node.Call,
                         is DataFlowIR.Node.Const,
                         is DataFlowIR.Node.FunctionReference,
@@ -1013,11 +1020,7 @@ internal object EscapeAnalysis {
 
                 fun mapNode(compressedNode: CompressedPointsToGraph.Node): Pair<DataFlowIR.Node?, PointsToGraphNode?> {
                     val (arg, rootNode) = when (val kind = compressedNode.kind) {
-                        CompressedPointsToGraph.NodeKind.Return ->
-                            if (call is DataFlowIR.Node.NewObject) // TODO: This better be an assertion.
-                                DataFlowIR.Node.Null to null
-                            else
-                                arguments.last() to nodes[arguments.last()]
+                        CompressedPointsToGraph.NodeKind.Return -> arguments.last() to nodes[arguments.last()]
                         is CompressedPointsToGraph.NodeKind.Param -> arguments[kind.index] to nodes[arguments[kind.index]]
                         is CompressedPointsToGraph.NodeKind.Drain -> null to calleeDrains[kind.index]
                     }
@@ -1616,12 +1619,12 @@ internal object EscapeAnalysis {
                         lifetime = Lifetime.GLOBAL
                     }
 
-                    if (lifetime == Lifetime.STACK && node is DataFlowIR.Node.NewObject) {
-                        val constructedType = node.constructedType
+                    if (lifetime == Lifetime.STACK && node is DataFlowIR.Node.AllocArray) {
+                        val constructedType = node.type
                         constructedType.irClass?.let { irClass ->
                             val itemSize = arrayItemSizeOf(irClass)
                             if (itemSize != null) {
-                                val sizeArgument = node.arguments.first().node
+                                val sizeArgument = node.size.node
                                 val arrayLength = arrayLengthOf(sizeArgument)?.takeIf { it >= 0 }
                                 val arraySize = arraySize(itemSize, arrayLength ?: Int.MAX_VALUE)
                                 if (arraySize <= allowedToAlloc) {
