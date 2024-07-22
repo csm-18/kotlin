@@ -12,6 +12,8 @@ kotlin {
         moduleName.set("Shared")
         flattenPackage.set("com.github.jetbrains.swiftexport")
 
+        export(project(":not-good-looking-project-name"))
+
         export(project(":subproject")) {
             moduleName.set("Subproject")
             flattenPackage.set("com.subproject.library")
@@ -21,12 +23,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(project(":subproject"))
-        }
-    }
-
-    sourceSets {
-        commonMain.dependencies {
-            implementation(project(":subproject"))
+            implementation(project(":not-good-looking-project-name"))
         }
     }
 }
