@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
-    implementation("org.jetbrains:annotations:24.0.0")
+    implementation(intellijRuntimeAnnotations())
 }
 
 sourceSets {
