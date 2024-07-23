@@ -260,9 +260,8 @@ internal class DECLARATION_ORIGIN_BRIDGE_METHOD(val bridgeTarget: IrSimpleFuncti
     }
 }
 
-// TODO: Replace IrFunction with IrSimpleFunction
-internal val IrFunction.bridgeTarget: IrSimpleFunction?
-        get() = (origin as? DECLARATION_ORIGIN_BRIDGE_METHOD)?.bridgeTarget
+internal val IrSimpleFunction.bridgeTarget: IrSimpleFunction?
+    get() = (origin as? DECLARATION_ORIGIN_BRIDGE_METHOD)?.bridgeTarget
 
 private fun IrBuilderWithScope.returnIfBadType(value: IrExpression,
                                                type: IrType,
