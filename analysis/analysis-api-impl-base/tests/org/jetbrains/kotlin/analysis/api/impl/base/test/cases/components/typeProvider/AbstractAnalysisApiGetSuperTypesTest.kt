@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiBase
 import org.jetbrains.kotlin.analysis.test.framework.projectStructure.KtTestModule
 import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerProvider
 import org.jetbrains.kotlin.analysis.test.framework.utils.executeOnPooledThreadInReadAction
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.services.TestServices
@@ -25,6 +26,7 @@ abstract class AbstractAnalysisApiGetSuperTypesTest : AbstractAnalysisApiBasedTe
 
         val actual = executeOnPooledThreadInReadAction {
             analyze(expression) {
+//                val expectedType = (expression as KtCallableReferenceExpression).receiverType!!
                 val expectedType = expression.expressionType ?: error("expect to get type of expression '${expression.text}'")
                 val directSuperTypes = expectedType.directSupertypes.toList()
                 val approximatedDirectSuperTypes = expectedType.directSupertypes(shouldApproximate = true).toList()
