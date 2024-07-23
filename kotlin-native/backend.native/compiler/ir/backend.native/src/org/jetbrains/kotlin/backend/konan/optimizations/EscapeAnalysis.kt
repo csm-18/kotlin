@@ -23,25 +23,13 @@ import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.util.constructedClass
 import org.jetbrains.kotlin.ir.util.getAllSuperclasses
 
-/*
-class A(val s: String)
-
-fun foo(x: Int) {
-    val a = A(x.toString())
-    println(a.toString()) <- a escapes for some reason?!
-}
-
-fun main() = foo(42)
- */
-
 private val DataFlowIR.Node.isAlloc
-    get() = this is DataFlowIR.Node.AllocInstance || this is DataFlowIR.Node.AllocArray
+    get() = this is DataFlowIR.Node.Alloc
 
 private val DataFlowIR.Node.ir
     get() = when (this) {
         is DataFlowIR.Node.Call -> irCallSite
-        is DataFlowIR.Node.AllocInstance -> irCallSite
-        is DataFlowIR.Node.AllocArray -> irCallSite
+        is DataFlowIR.Node.Alloc -> irCallSite
         is DataFlowIR.Node.ArrayRead -> irCallSite
         is DataFlowIR.Node.FieldRead -> ir
         else -> null
@@ -542,7 +530,7 @@ internal object EscapeAnalysis {
                                 (it is IrConstructorCall &&
                                         throwable in it.symbol.owner.constructedClass.getAllSuperclasses())
 
-                        if (node.isAlloc) {
+                        if (node is DataFlowIR.Node.Alloc) {
                             if (lifetime == Lifetime.GLOBAL) {
                                 ++stats.totalGlobalAllocsCount
                                 if (!isFilteredOut)
@@ -919,8 +907,7 @@ internal object EscapeAnalysis {
                                     variable.addAssignmentEdge(nodes[value.node]!!)
                             }
                         }
-                        is DataFlowIR.Node.AllocInstance,
-                        is DataFlowIR.Node.AllocArray,
+                        is DataFlowIR.Node.Alloc,
                         is DataFlowIR.Node.Call,
                         is DataFlowIR.Node.Const,
                         is DataFlowIR.Node.FunctionReference,
@@ -1639,7 +1626,7 @@ internal object EscapeAnalysis {
                     }
 
                     if (lifetime != computedLifetime) {
-                        if (propagateExiledToHeapObjects && node.isAlloc) {
+                        if (propagateExiledToHeapObjects && node is DataFlowIR.Node.Alloc) {
                             context.log { "Forcing node ${nodeToString(node)} to escape" }
                             escapeOrigins += ptgNode
                             propagateEscapeOrigin(ptgNode)

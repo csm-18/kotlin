@@ -231,9 +231,11 @@ internal object DataFlowIR {
 
         class Singleton(val type: Type, val constructor: FunctionSymbol?, val arguments: List<Edge>?) : Node()
 
-        class AllocInstance(val type: Type, val irCallSite: IrCall?) : Node()
+        sealed class Alloc(val type: Type, val irCallSite: IrCall?) : Node()
 
-        class AllocArray(val type: Type, val size: Edge, val irCallSite: IrCall?) : Node()
+        class AllocInstance(type: Type, irCallSite: IrCall?) : Alloc(type, irCallSite)
+
+        class AllocArray(type: Type, val size: Edge, irCallSite: IrCall?) : Alloc(type, irCallSite)
 
         class FunctionReference(val symbol: FunctionSymbol, val type: Type, val returnType: Type) : Node()
 

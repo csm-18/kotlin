@@ -1254,13 +1254,7 @@ internal object DevirtualizationAnalysis {
                             instanceNode
                         }
 
-                        is DataFlowIR.Node.AllocInstance -> {
-                            val type = node.type
-                            addInstantiatingClass(type)
-                            concreteClass(type)
-                        }
-
-                        is DataFlowIR.Node.AllocArray -> {
+                        is DataFlowIR.Node.Alloc -> {
                             val type = node.type
                             addInstantiatingClass(type)
                             concreteClass(type)
