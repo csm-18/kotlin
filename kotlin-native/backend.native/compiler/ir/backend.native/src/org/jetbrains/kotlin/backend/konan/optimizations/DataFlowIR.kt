@@ -217,14 +217,13 @@ internal object DataFlowIR {
         object Null : Node()
 
         open class Call(val callee: FunctionSymbol, val arguments: List<Edge>, val returnType: Type,
-                        open val irCallSite: IrFunctionAccessExpression?) : Node()
+                        val irCallSite: IrCall?) : Node()
 
-        class StaticCall(callee: FunctionSymbol, arguments: List<Edge>,
-                         returnType: Type, irCallSite: IrFunctionAccessExpression?)
+        class StaticCall(callee: FunctionSymbol, arguments: List<Edge>, returnType: Type, irCallSite: IrCall?)
             : Call(callee, arguments, returnType, irCallSite)
 
         open class VirtualCall(callee: FunctionSymbol, arguments: List<Edge>,
-                               val receiverType: Type, returnType: Type, override val irCallSite: IrCall?)
+                               val receiverType: Type, returnType: Type, irCallSite: IrCall?)
             : Call(callee, arguments, returnType, irCallSite)
 
         class VtableCall(callee: FunctionSymbol, receiverType: Type, val calleeVtableIndex: Int,

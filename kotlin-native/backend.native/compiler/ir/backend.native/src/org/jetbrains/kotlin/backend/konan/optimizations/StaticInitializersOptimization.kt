@@ -276,7 +276,7 @@ internal object StaticInitializersOptimization {
             val virtualCallSites = mutableMapOf<IrCall, MutableList<CallGraphNode.CallSite>>()
             for (callSite in node.callSites) {
                 val call = callSite.call
-                val irCall = call.irCallSite as? IrCall ?: continue
+                val irCall = call.irCallSite ?: continue
                 if (irCall.origin == STATEMENT_ORIGIN_PRODUCER_INVOCATION)
                     producerInvocations[irCall.dispatchReceiver!!] = irCall
                 else if (irCall.origin == STATEMENT_ORIGIN_JOB_INVOCATION)
