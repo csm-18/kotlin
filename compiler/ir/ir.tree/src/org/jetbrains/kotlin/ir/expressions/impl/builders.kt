@@ -946,7 +946,6 @@ fun IrCallImpl.Companion.fromSymbolDescriptor(
 ): IrCallImpl =
     IrCallImpl(startOffset, endOffset, type, symbol, typeArgumentsCount, valueArgumentsCount, origin, superQualifierSymbol)
 
-@Suppress("EXTENSION_SHADOWED_BY_MEMBER")
 fun IrCallImpl.Companion.fromSymbolOwner(
     startOffset: Int,
     endOffset: Int,
