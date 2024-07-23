@@ -78,7 +78,7 @@ abstract class InventNamesForLocalClasses : FileLoweringPass {
         private fun getEnclosingName(): String {
             val enclosingName = generateSequence(this) { it.parent }
                 .toList().dropLast(1).reversed()
-                .filter { if (!this.processingInlinedFunction) true else !it.nameBelongToVariable }
+                .filterNot { this.processingInlinedFunction && it.nameBelongToVariable }
                 .joinToString("\$") { it.currentName }
             return enclosingName
         }
