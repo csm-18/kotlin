@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.fir.references.toResolvedConstructorSymbol
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
 import org.jetbrains.kotlin.fir.types.*
+import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrExpression
@@ -41,10 +42,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.symbols.UnsafeDuringIrConstructionAPI
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.util.classId
-import org.jetbrains.kotlin.ir.util.constructedClassType
-import org.jetbrains.kotlin.ir.util.isSetter
-import org.jetbrains.kotlin.ir.util.parentAsClass
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.resolve.DataClassResolver
 
@@ -182,13 +180,8 @@ internal class ClassMemberGenerator(
                 when {
                     // Create fake bodies for Enum.values/Enum.valueOf
                     irFunction.origin == IrDeclarationOrigin.ENUM_CLASS_SPECIAL_MEMBER -> {
-                        irFunction.body =
-                            if (configuration.skipBodies) {
-                                factory.createExpressionBody(IrConstImpl.defaultValueForType(startOffset, endOffset, irFunction.returnType))
-                            } else {
-                                val kind = Fir2IrDeclarationStorage.ENUM_SYNTHETIC_NAMES.getValue(irFunction.name)
-                                IrSyntheticBodyImpl(startOffset, endOffset, kind)
-                            }
+                        val kind = Fir2IrDeclarationStorage.ENUM_SYNTHETIC_NAMES.getValue(irFunction.name)
+                        irFunction.body = IrSyntheticBodyImpl(startOffset, endOffset, kind)
                     }
                     irFunction.parent is IrClass && irFunction.parentAsClass.isData -> {
                         require(irFunction is IrSimpleFunction)
@@ -205,9 +198,19 @@ internal class ClassMemberGenerator(
                         }
                     }
                     else -> {
+                        val firBody = firFunction?.body
                         irFunction.body =
-                            if (configuration.skipBodies) factory.createBlockBody(startOffset, endOffset)
-                            else firFunction?.body?.let { visitor.convertToIrBlockBody(it) }
+                            when {
+                                firBody == null -> null
+                                configuration.skipBodies -> factory.createBlockBody(startOffset, endOffset).also { body ->
+                                    val expression =
+                                        IrErrorExpressionImpl(startOffset, endOffset, builtins.nothingType, SKIP_BODIES_ERROR_DESCRIPTION)
+                                    body.statements.add(
+                                        IrReturnImpl(startOffset, endOffset, builtins.nothingType, irFunction.symbol, expression)
+                                    )
+                                }
+                                else -> visitor.convertToIrBlockBody(firBody)
+                            }
                     }
                 }
             }
@@ -303,32 +306,23 @@ internal class ClassMemberGenerator(
                     val backingField = correspondingProperty.backingField
                     val fieldSymbol = backingField?.symbol
                     val declaration = this
-                    if (fieldSymbol != null) {
-                        body =
-                            if (configuration.skipBodies) {
+                    if (fieldSymbol != null && !configuration.skipBodies) {
+                        body = factory.createBlockBody(
+                            startOffset, endOffset,
+                            listOf(
                                 if (isSetter) {
-                                    factory.createBlockBody(startOffset, endOffset)
+                                    IrSetFieldImpl(startOffset, endOffset, fieldSymbol, builtins.unitType).apply {
+                                        setReceiver(declaration)
+                                        value = IrGetValueImpl(startOffset, endOffset, propertyType, valueParameters.first().symbol)
+                                    }
                                 } else {
-                                    factory.createExpressionBody(IrConstImpl.defaultValueForType(startOffset, endOffset, returnType))
-                                }
-                            } else {
-                                factory.createBlockBody(
-                                    startOffset, endOffset,
-                                    listOf(
-                                        if (isSetter) {
-                                            IrSetFieldImpl(startOffset, endOffset, fieldSymbol, builtins.unitType).apply {
-                                                setReceiver(declaration)
-                                                value = IrGetValueImpl(startOffset, endOffset, propertyType, valueParameters.first().symbol)
-                                            }
-                                        } else {
-                                            IrReturnImpl(
-                                                startOffset, endOffset, builtins.nothingType, symbol,
-                                                IrGetFieldImpl(startOffset, endOffset, fieldSymbol, propertyType).setReceiver(declaration)
-                                            )
-                                        }
+                                    IrReturnImpl(
+                                        startOffset, endOffset, builtins.nothingType, symbol,
+                                        IrGetFieldImpl(startOffset, endOffset, fieldSymbol, propertyType).setReceiver(declaration)
                                     )
-                                )
-                            }
+                                }
+                            )
+                        )
                     }
                     declarationStorage.leaveScope(this.symbol)
                 }
@@ -428,7 +422,15 @@ internal class ClassMemberGenerator(
 
         val firDefaultValue = firValueParameter.defaultValue
         if (firDefaultValue != null) {
-            this.defaultValue = factory.createExpressionBody(visitor.convertToIrExpression(firDefaultValue))
+            this.defaultValue =
+                factory.createExpressionBody(
+                    if (configuration.skipBodies && !parent.isAnnotationConstructor)
+                        IrErrorExpressionImpl(startOffset, endOffset, builtins.nothingType, SKIP_BODIES_ERROR_DESCRIPTION)
+                    else visitor.convertToIrExpression(firDefaultValue)
+                )
         }
     }
+
+    private val IrElement.isAnnotationConstructor: Boolean
+        get() = this is IrConstructor && parentAsClass.isAnnotationClass
 }

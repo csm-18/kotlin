@@ -137,6 +137,8 @@ class Fir2IrVisitor(
         @OptIn(UnsafeDuringIrConstructionAPI::class)
         val irEnumEntry = classifierStorage.getIrEnumEntrySymbol(enumEntry).owner
         annotationGenerator.generate(irEnumEntry, enumEntry)
+        if (configuration.skipBodies) return irEnumEntry
+
         val correspondingClass = irEnumEntry.correspondingClass
         val initializer = enumEntry.initializer
         val irType = enumEntry.returnTypeRef.toIrType(c)
