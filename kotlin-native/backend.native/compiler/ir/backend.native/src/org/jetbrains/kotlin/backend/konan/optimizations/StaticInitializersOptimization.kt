@@ -145,10 +145,10 @@ internal object StaticInitializersOptimization {
 
             context.log { "THIRD PHASE: collect call sites" }
 
-            val callSitesRequiringGlobalInitializerCall = mutableSetOf<IrFunctionAccessExpression>()
-            val callSitesRequiringThreadLocalInitializerCall = mutableSetOf<IrFunctionAccessExpression>()
-            val callSitesNotRequiringGlobalInitializerCall = mutableSetOf<IrFunctionAccessExpression>()
-            val callSitesNotRequiringThreadLocalInitializerCall = mutableSetOf<IrFunctionAccessExpression>()
+            val callSitesRequiringGlobalInitializerCall = mutableSetOf<IrCall>()
+            val callSitesRequiringThreadLocalInitializerCall = mutableSetOf<IrCall>()
+            val callSitesNotRequiringGlobalInitializerCall = mutableSetOf<IrCall>()
+            val callSitesNotRequiringThreadLocalInitializerCall = mutableSetOf<IrCall>()
 
             for (node in callGraph.directEdges.values) {
                 intraproceduralAnalysis(node, initializedFiles, AnalysisGoal.CollectCallSites,
@@ -234,7 +234,7 @@ internal object StaticInitializersOptimization {
         private val executeImplSymbol = context.ir.symbols.executeImpl
         private val getContinuationSymbol = context.ir.symbols.getContinuation
 
-        private var dummySet = mutableSetOf<IrFunctionAccessExpression>()
+        private var dummySet = mutableSetOf<IrCall>()
 
         private enum class AnalysisGoal {
             ComputeInitializedAfterCall,
@@ -249,10 +249,10 @@ internal object StaticInitializersOptimization {
                 node: CallGraphNode,
                 initializedContainers: InitializedContainers,
                 analysisGoal: AnalysisGoal,
-                callSitesRequiringGlobalInitializerCall: MutableSet<IrFunctionAccessExpression> = dummySet,
-                callSitesRequiringThreadLocalInitializerCall: MutableSet<IrFunctionAccessExpression> = dummySet,
-                callSitesNotRequiringGlobalInitializerCall: MutableSet<IrFunctionAccessExpression> = dummySet,
-                callSitesNotRequiringThreadLocalInitializerCall: MutableSet<IrFunctionAccessExpression> = dummySet
+                callSitesRequiringGlobalInitializerCall: MutableSet<IrCall> = dummySet,
+                callSitesRequiringThreadLocalInitializerCall: MutableSet<IrCall> = dummySet,
+                callSitesNotRequiringGlobalInitializerCall: MutableSet<IrCall> = dummySet,
+                callSitesNotRequiringThreadLocalInitializerCall: MutableSet<IrCall> = dummySet
         ) {
             val irDeclaration = node.symbol.irDeclaration ?: return
             val body = if (node.symbol.isStaticFieldInitializer)
@@ -431,7 +431,7 @@ internal object StaticInitializersOptimization {
                     error("IrGetObjectValue should be lowered away at this point")
                 }
 
-                private fun processCall(expression: IrFunctionAccessExpression, actualCallee: IrFunction, data: BitSet): BitSet {
+                private fun processCall(expression: IrCall, actualCallee: IrFunction, data: BitSet): BitSet {
                     val arguments = expression.getArgumentsWithIr()
                     val argumentsResult = arguments.fold(data) { set, arg -> arg.second.accept(this, set) }
                     updateResultForFunction(actualCallee, argumentsResult)
@@ -476,16 +476,6 @@ internal object StaticInitializersOptimization {
                     // Actual job could be invoked on another thread, thus can't take the result from that call.
                     return curData
                 }
-
-                private fun processCoroutineLaunchpad(expression: IrCall, data: BitSet): BitSet {
-                    val call = expression.getValueArgument(0)!!
-                    val continuation = expression.getValueArgument(1)!!
-                    val curData = continuation.accept(this, data)
-                    return call.accept(this, curData)
-                }
-
-                override fun visitFunctionAccess(expression: IrFunctionAccessExpression, data: BitSet) =
-                        processCall(expression, expression.actualCallee, data)
 
                 override fun visitCall(expression: IrCall, data: BitSet): BitSet {
                     if (expression.symbol.owner.isStaticInitializer)
@@ -540,7 +530,7 @@ internal object StaticInitializersOptimization {
                 return super.visitDeclaration(declaration, context.createIrBuilder(declaration.symbol, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET))
             }
 
-            override fun visitFunctionAccess(expression: IrFunctionAccessExpression, data: IrBuilderWithScope?): IrExpression {
+            override fun visitCall(expression: IrCall, data: IrBuilderWithScope?): IrExpression {
                 expression.transformChildren(this, data)
 
                 val callee = expression.actualCallee

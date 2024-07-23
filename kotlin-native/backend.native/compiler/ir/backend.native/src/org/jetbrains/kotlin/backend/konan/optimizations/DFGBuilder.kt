@@ -621,7 +621,7 @@ internal class FunctionDFGBuilder(private val generationState: NativeGenerationS
 
                             is IrCall -> when (value.symbol) {
                                 in arrayGetSymbols -> {
-                                    val actualCallee = value.actualCallee as IrSimpleFunction
+                                    val actualCallee = value.actualCallee
                                     DataFlowIR.Node.ArrayRead(
                                             symbolTable.mapFunction(actualCallee),
                                             array = expressionToEdge(value.dispatchReceiver!!),
@@ -631,7 +631,7 @@ internal class FunctionDFGBuilder(private val generationState: NativeGenerationS
                                 }
 
                                 in arraySetSymbols -> {
-                                    val actualCallee = value.actualCallee as IrSimpleFunction
+                                    val actualCallee = value.actualCallee
                                     DataFlowIR.Node.ArrayWrite(
                                             symbolTable.mapFunction(actualCallee),
                                             array = expressionToEdge(value.dispatchReceiver!!),
@@ -709,7 +709,7 @@ internal class FunctionDFGBuilder(private val generationState: NativeGenerationS
                                             )
                                         }
                                     } else {
-                                        val actualCallee = value.actualCallee as IrSimpleFunction
+                                        val actualCallee = value.actualCallee
                                         DataFlowIR.Node.StaticCall(
                                                 symbolTable.mapFunction(actualCallee),
                                                 arguments,
