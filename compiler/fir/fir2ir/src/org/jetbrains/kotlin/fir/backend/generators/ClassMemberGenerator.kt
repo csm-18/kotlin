@@ -121,19 +121,17 @@ internal class ClassMemberGenerator(
                 annotationGenerator.generate(irFunction, firFunction)
             }
             if (firFunction is FirConstructor && irFunction is IrConstructor && !firFunction.isExpect && !irFunction.isExternal) {
-                val body = factory.createBlockBody(startOffset, endOffset)
-                val delegatedConstructor = firFunction.delegatedConstructor
-                val irClass = parent as IrClass
-                if (delegatedConstructor != null) {
-                    val irDelegatingConstructorCall = conversionScope.forDelegatingConstructorCall(irFunction, irClass) {
-                        delegatedConstructor.toIrDelegatingConstructorCall()
+                if (!configuration.skipBodies) {
+                    val body = factory.createBlockBody(startOffset, endOffset)
+                    val delegatedConstructor = firFunction.delegatedConstructor
+                    val irClass = parent as IrClass
+                    if (delegatedConstructor != null) {
+                        val irDelegatingConstructorCall = conversionScope.forDelegatingConstructorCall(irFunction, irClass) {
+                            delegatedConstructor.toIrDelegatingConstructorCall()
+                        }
+                        body.statements += irDelegatingConstructorCall
                     }
-                    body.statements += irDelegatingConstructorCall
-                }
 
-                if (configuration.skipBodies) {
-                    irFunction.body = body
-                } else {
                     if (containingClass is FirRegularClass && containingClass.contextReceivers.isNotEmpty()) {
                         val contextReceiverFields =
                             c.classifierStorage.getFieldsWithContextReceiversForClass(irClass, containingClass)
@@ -252,7 +250,7 @@ internal class ClassMemberGenerator(
         conversionScope.withParent(irField) {
             declarationStorage.enterScope(irField.symbol)
             val initializerExpression = field.initializer
-            if (irField.initializer == null && initializerExpression != null) {
+            if (irField.initializer == null && initializerExpression != null && !configuration.skipBodies) {
                 irField.initializer = irFactory.createExpressionBody(visitor.convertToIrExpression(initializerExpression))
             }
             declarationStorage.leaveScope(irField.symbol)
