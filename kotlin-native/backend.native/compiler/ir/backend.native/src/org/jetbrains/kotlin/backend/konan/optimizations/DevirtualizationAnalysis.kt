@@ -1345,6 +1345,12 @@ internal object DevirtualizationAnalysis {
         val symbols = context.ir.symbols
         val nativePtrEqualityOperatorSymbol = symbols.areEqualByValue[PrimitiveBinaryType.POINTER]!!
         val isSubtype = symbols.isSubtype
+        val getObjectTypeInfo = symbols.getObjectTypeInfo
+        val createUninitializedInstance = symbols.createUninitializedInstance
+        val kClassImplType = symbols.kClassImpl.defaultType
+        val kClassImplConstructorImpl = symbols.kClassImplConstructor.owner.constructorImplFunction!!
+        val throwInvalidReceiverTypeException = symbols.throwInvalidReceiverTypeException
+
         val optimize = context.shouldOptimize()
         val genericSafeCasts = context.config.genericSafeCasts
 
@@ -1450,17 +1456,16 @@ internal object DevirtualizationAnalysis {
             }
         }
 
-        // TODO: extract to fields createUninitializedInstance, kClassImpl.
         fun IrBuilderWithScope.irThrowInvalidReceiverTypeException(getTypeInfo: () -> IrExpression): IrExpression = irBlock {
             val kClass = irTemporary(
-                    irCall(symbols.createUninitializedInstance, symbols.kClassImpl.defaultType, listOf(symbols.kClassImpl.defaultType)),
+                    irCall(createUninitializedInstance, kClassImplType, listOf(kClassImplType)),
                     nameHint = "clazz"
             )
-            +irCall(symbols.kClassImplConstructor.owner.constructorImplFunction!!).apply {
+            +irCall(kClassImplConstructorImpl).apply {
                 dispatchReceiver = irGet(kClass)
                 putValueArgument(0, getTypeInfo())
             }
-            +irCall(symbols.throwInvalidReceiverTypeException).apply {
+            +irCall(throwInvalidReceiverTypeException).apply {
                 putValueArgument(0, irGet(kClass))
             }
         }
@@ -1503,7 +1508,7 @@ internal object DevirtualizationAnalysis {
                     return when {
                         possibleCallees.isEmpty() -> irBlock(expression) {
                             val throwExpr = irThrowInvalidReceiverTypeException {
-                                irCall(symbols.getObjectTypeInfo.owner).apply {
+                                irCall(getObjectTypeInfo.owner).apply {
                                     putValueArgument(0, expression.dispatchReceiver!!)
                                 }
                             }
@@ -1578,7 +1583,7 @@ internal object DevirtualizationAnalysis {
                             }
                             val receiver = irTemporary(arguments[0].getFullValue(this@irBlock))
                             val typeInfo by lazy {
-                                irTemporary(irCall(symbols.getObjectTypeInfo).apply {
+                                irTemporary(irCall(getObjectTypeInfo).apply {
                                     putValueArgument(0, irGet(receiver))
                                 })
                             }

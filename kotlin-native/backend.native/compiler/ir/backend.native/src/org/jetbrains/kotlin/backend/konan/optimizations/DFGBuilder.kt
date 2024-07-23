@@ -235,7 +235,7 @@ internal class FunctionDFGBuilder(private val generationState: NativeGenerationS
 
             if (expression is IrCall) {
                 if (expression.symbol == initInstanceSymbol) {
-                    error("Should've been lowered")
+                    error("Should've been lowered: ${expression.render()}")
                 }
                 if (expression.symbol == executeImplSymbol) {
                     // Producer and job of executeImpl are called externally, we need to reflect this somehow.
@@ -617,7 +617,7 @@ internal class FunctionDFGBuilder(private val generationState: NativeGenerationS
                                 DataFlowIR.Node.Singleton(symbolTable.mapType(value.type), constructor, emptyList())
                             }
 
-                            is IrConstructorCall, is IrDelegatingConstructorCall -> error("Should've been lowered")
+                            is IrConstructorCall, is IrDelegatingConstructorCall -> error("Should've been lowered: ${value.render()}")
 
                             is IrCall -> when (value.symbol) {
                                 in arrayGetSymbols -> {
@@ -652,7 +652,7 @@ internal class FunctionDFGBuilder(private val generationState: NativeGenerationS
 
                                 reinterpret -> getNode(value.extensionReceiver!!).value
 
-                                initInstanceSymbol -> error("Should've been lowered")
+                                initInstanceSymbol -> error("Should've been lowered: ${value.render()}")
 
                                 else -> {
                                     /*
