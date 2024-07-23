@@ -99,13 +99,13 @@ public final class NonExistentClassWIthoutCorrectionKt {
  */
 @kotlin.Metadata()
 public final class NonExistentType {
-    @org.jetbrains.annotations.NotNull()
+    @org.jetbrains.annotations.Nullable()
     private static final error.NonExistentClass a = null;
     @org.jetbrains.annotations.Nullable()
     private static final java.util.List<error.NonExistentClass> b = null;
     @org.jetbrains.annotations.NotNull()
     private static final kotlin.jvm.functions.Function1<error.NonExistentClass, kotlin.Unit> c = null;
-    @org.jetbrains.annotations.NotNull()
+    @org.jetbrains.annotations.Nullable()
     private static final error.NonExistentClass d = null;
     public static java.lang.String string2;
     public static error.NonExistentClass coocoo;
@@ -120,7 +120,7 @@ public final class NonExistentType {
         super();
     }
 
-    @org.jetbrains.annotations.NotNull()
+    @org.jetbrains.annotations.Nullable()
     public final error.NonExistentClass getA() {
         return null;
     }
@@ -135,7 +135,7 @@ public final class NonExistentType {
         return null;
     }
 
-    @org.jetbrains.annotations.NotNull()
+    @org.jetbrains.annotations.Nullable()
     public final error.NonExistentClass getD() {
         return null;
     }

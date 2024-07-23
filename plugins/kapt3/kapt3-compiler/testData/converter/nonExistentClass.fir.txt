@@ -40,13 +40,13 @@
 @kotlin.Metadata()
 @kotlin.Suppress(names = {"UNRESOLVED_REFERENCE"})
 public final class NonExistentType {
-    @org.jetbrains.annotations.NotNull()
+    @org.jetbrains.annotations.Nullable()
     private static final ABCDEF a = null;
     @org.jetbrains.annotations.Nullable()
     private static final List<ABCDEF> b = null;
     @org.jetbrains.annotations.NotNull()
     private static final Function1<ABCDEF, Unit> c = null;
-    @org.jetbrains.annotations.NotNull()
+    @org.jetbrains.annotations.Nullable()
     private static final ABCDEF<String, Function1<List<ABCDEF>, Unit>> d = null;
     @org.jetbrains.annotations.NotNull()
     public static final NonExistentType INSTANCE = null;
@@ -55,7 +55,7 @@ public final class NonExistentType {
         super();
     }
 
-    @org.jetbrains.annotations.NotNull()
+    @org.jetbrains.annotations.Nullable()
     public final ABCDEF getA() {
         return null;
     }
@@ -70,7 +70,7 @@ public final class NonExistentType {
         return null;
     }
 
-    @org.jetbrains.annotations.NotNull()
+    @org.jetbrains.annotations.Nullable()
     public final ABCDEF<String, Function1<List<ABCDEF>, Unit>> getD() {
         return null;
     }

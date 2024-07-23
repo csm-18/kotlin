@@ -274,7 +274,7 @@ import kotlin.reflect.KClass;
 @kotlin.Metadata()
 public final class Test<G extends java.lang.Object> {
     public ABC a;
-    @org.jetbrains.annotations.NotNull()
+    @org.jetbrains.annotations.Nullable()
     private final ABC b = null;
     @org.jetbrains.annotations.Nullable()
     private final List<ABC> c = null;
@@ -315,7 +315,7 @@ public final class Test<G extends java.lang.Object> {
     ABC p0) {
     }
 
-    @org.jetbrains.annotations.NotNull()
+    @org.jetbrains.annotations.Nullable()
     public final ABC getB() {
         return null;
     }
@@ -493,7 +493,7 @@ public final class Test<G extends java.lang.Object> {
     java.util.Calendar.Builder p0) {
     }
 
-    @org.jetbrains.annotations.NotNull()
+    @org.jetbrains.annotations.Nullable()
     public final BCD f1(@org.jetbrains.annotations.NotNull()
     ABC a) {
         return null;
