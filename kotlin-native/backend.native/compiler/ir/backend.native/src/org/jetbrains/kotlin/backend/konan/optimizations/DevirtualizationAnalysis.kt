@@ -1439,12 +1439,12 @@ internal object DevirtualizationAnalysis {
             return (actualCallee as? DataFlowIR.FunctionSymbol.Declared)?.bridgeTarget.let { bridgeTarget ->
                 if (bridgeTarget == null || genericSafeCasts) // Can't easily inline bridges with casts.
                     irDevirtualizedCall(callSite, actualType,
-                            actualCallee.irFunction as IrSimpleFunction,
+                            actualCallee.irFunction!!,
                             arguments.map { it.getFullValue(this@irDevirtualizedCall) }
                     )
                 else {
                     val callResult = irDevirtualizedCall(callSite, actualType,
-                            bridgeTarget.irFunction as IrSimpleFunction,
+                            bridgeTarget.irFunction!!,
                             arguments.mapIndexed { index, value ->
                                 val coercion = getTypeConversion(actualCallee.parameters[index], bridgeTarget.parameters[index])
                                 val fullValue = value.getFullValue(this@irDevirtualizedCall)

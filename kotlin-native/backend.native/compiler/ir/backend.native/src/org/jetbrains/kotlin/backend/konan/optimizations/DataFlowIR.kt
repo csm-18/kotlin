@@ -104,6 +104,12 @@ internal object DataFlowIR {
     class FunctionParameter(val type: Type, val boxFunction: FunctionSymbol?, val unboxFunction: FunctionSymbol?)
 
     abstract class FunctionSymbol(val attributes: Int, val irDeclaration: IrDeclaration?, val name: String?) {
+        init {
+            require(irDeclaration == null || irDeclaration is IrSimpleFunction || irDeclaration is IrField) {
+                "Unexpected declaration: ${irDeclaration?.render()}"
+            }
+        }
+
         lateinit var parameters: Array<FunctionParameter>
         lateinit var returnParameter: FunctionParameter
 
@@ -112,7 +118,7 @@ internal object DataFlowIR {
         val returnsNothing = attributes.and(FunctionAttributes.RETURNS_NOTHING) != 0
         val explicitlyExported = attributes.and(FunctionAttributes.EXPLICITLY_EXPORTED) != 0
 
-        val irFunction: IrFunction? get() = irDeclaration as? IrFunction
+        val irFunction: IrSimpleFunction? get() = irDeclaration as? IrSimpleFunction
         val irFile: IrFile? get() = irDeclaration?.fileOrNull
 
         var escapes: Int? = null

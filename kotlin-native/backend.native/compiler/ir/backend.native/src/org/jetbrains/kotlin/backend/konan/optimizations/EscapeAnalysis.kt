@@ -15,16 +15,13 @@ import org.jetbrains.kotlin.backend.konan.DirectedGraphCondensationBuilder
 import org.jetbrains.kotlin.backend.konan.DirectedGraphMultiNode
 import org.jetbrains.kotlin.backend.konan.llvm.Lifetime
 import org.jetbrains.kotlin.backend.konan.logMultiple
+import org.jetbrains.kotlin.backend.konan.lower.constructor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
-import org.jetbrains.kotlin.ir.declarations.IrConstructor
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.util.constructedClass
 import org.jetbrains.kotlin.ir.util.getAllSuperclasses
-
-private val DataFlowIR.Node.isAlloc
-    get() = this is DataFlowIR.Node.Alloc
 
 private val DataFlowIR.Node.ir
     get() = when (this) {
@@ -523,12 +520,10 @@ internal object EscapeAnalysis {
 
                         // Filter out some irrelevant cases (like globals and exceptions).
                         val isFilteredOut = functionSymbol.isStaticFieldInitializer ||
-                                (functionSymbol.irFunction as? IrConstructor)
-                                        ?.constructedClass?.kind?.let { kind ->
-                                            kind == ClassKind.ENUM_CLASS || kind == ClassKind.OBJECT
-                                        } == true ||
-                                (it is IrConstructorCall &&
-                                        throwable in it.symbol.owner.constructedClass.getAllSuperclasses())
+                                functionSymbol.irFunction?.constructor?.constructedClass?.kind?.let { kind ->
+                                    kind == ClassKind.ENUM_CLASS || kind == ClassKind.OBJECT
+                                } == true ||
+                                (node as? DataFlowIR.Node.Alloc)?.type?.irClass?.getAllSuperclasses()?.contains(throwable) == true
 
                         if (node is DataFlowIR.Node.Alloc) {
                             if (lifetime == Lifetime.GLOBAL) {
