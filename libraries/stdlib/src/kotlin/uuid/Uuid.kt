@@ -200,6 +200,16 @@ public class Uuid internal constructor(
         return (x shr 32).toInt() xor x.toInt()
     }
 
+    private fun writeReplace(): Any = Serialized(mostSignificantBits, leastSignificantBits)
+
+    private class Serialized(val mostSignificantBits: Long, val leastSignificantBits: Long) : Serializable {
+        companion object {
+            private const val serialVersionUID: Long = 0L
+        }
+
+        private fun readResolve(): Any = fromLongs(mostSignificantBits, leastSignificantBits)
+    }
+
     public companion object {
         /**
          * The uuid with all bits set to zero.
