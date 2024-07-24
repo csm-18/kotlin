@@ -637,7 +637,7 @@ internal object DataFlowIR {
             return symbol
         }
 
-        private val IrFunction.isSpecial get() =
+        private val IrSimpleFunction.isSpecial get() =
             origin == DECLARATION_ORIGIN_INLINE_CLASS_SPECIAL_FUNCTION
                     || origin is DECLARATION_ORIGIN_BRIDGE_METHOD
 
