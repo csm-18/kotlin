@@ -38,12 +38,18 @@ fun IrBuilderWithScope.irDiagramString(
     variables: List<IrTemporaryVariable>,
 ): IrExpression {
     val callInfo = sourceFile.getSourceRangeInfo(call)
-    val indent = callInfo.startColumnNumber
 
     // Get call source string starting at the very beginning of the first line.
     // This is so multiline calls all start from the same column offset.
-    val rows = sourceFile.getText(callInfo.startOffset - indent, callInfo.endOffset)
+    val rows = sourceFile.getText(callInfo.startOffset - callInfo.startColumnNumber, callInfo.endOffset)
+        .clearSourcePrefix(callInfo.startColumnNumber)
         .split("\n")
+
+    val minSourceIndent = rows.minOf { line ->
+        // Find index of first non-whitespace character.
+        val indent = line.indexOfFirst { !it.isWhitespace() }
+        if (indent == -1) Int.MAX_VALUE else indent
+    }
 
     val valuesByRow = variables
         .map { it.toValueDisplay(callInfo) }
@@ -57,19 +63,24 @@ fun IrBuilderWithScope.irDiagramString(
             addArgument(
                 irString {
                     appendLine()
-                    append(rowSource.substring(minOf(indent, rowSource.length)))
+                    append(rowSource.substring(minOf(minSourceIndent, rowSource.length)))
                 },
             )
 
             val rowValues = valuesByRow[row] ?: continue
 
             val lineTemplate = buildString {
-                val indentations = rowValues.mapTo(mutableSetOf()) { it.indent }
+                val indentations = rowValues.mapTo(hashSetOf()) { it.indent }
+                val lastIndent = rowValues.last().indent
                 for ((i, c) in rowSource.withIndex()) {
                     when {
-                        i in indentations -> append('|')
-                        c != ' ' && c != '\t' -> append(' ')
-                        else -> append(c)
+                        i in indentations -> {
+                            // Add bar at indents for value display.
+                            append('|')
+                            if (i == lastIndent) break // Do not add trailing whitespace.
+                        }
+                        c == '\t' -> append('\t') // Preserve tabs in source code.
+                        else -> append(' ')
                     }
                 }
             }
@@ -77,7 +88,7 @@ fun IrBuilderWithScope.irDiagramString(
             addArgument(
                 irString {
                     appendLine()
-                    append(lineTemplate.substring(indent, rowValues.last().indent + 1))
+                    append(lineTemplate.substring(minSourceIndent))
                 },
             )
 
@@ -85,7 +96,7 @@ fun IrBuilderWithScope.irDiagramString(
                 addArgument(
                     irString {
                         appendLine()
-                        append(lineTemplate.substring(indent, tmp.indent))
+                        append(lineTemplate.substring(minSourceIndent, tmp.indent))
                     },
                 )
                 addArgument(irGet(tmp.value))
@@ -97,6 +108,20 @@ fun IrBuilderWithScope.irDiagramString(
                 appendLine()
             }
         )
+    }
+}
+
+private fun String.clearSourcePrefix(offset: Int): String = buildString {
+    for ((i, c) in this@clearSourcePrefix.withIndex()) {
+        when {
+            i >= offset -> {
+                // Append the remaining characters and exit.
+                append(this@clearSourcePrefix.substring(i))
+                break
+            }
+            c == '\t' -> append('\t') // Preserve tabs.
+            else -> append(' ') // Replace all other characters with spaces.
+        }
     }
 }
 
