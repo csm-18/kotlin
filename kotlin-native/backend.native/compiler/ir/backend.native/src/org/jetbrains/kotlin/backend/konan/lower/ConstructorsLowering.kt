@@ -31,11 +31,7 @@ import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addToStdlib.getOrSetIfNull
 
-internal var IrConstructor.constructorImplFunction: IrSimpleFunction? by irAttribute(followAttributeOwner = false)
-internal var IrSimpleFunction.constructor: IrConstructor? by irAttribute(followAttributeOwner = false)
-
-internal fun Context.getConstructorImpl(irConstructor: IrConstructor): IrSimpleFunction {
-    /*
+/*
  * class A<T> constructor(x: T) {
  *     val x: T = x
  * }
@@ -50,6 +46,11 @@ internal fun Context.getConstructorImpl(irConstructor: IrConstructor): IrSimpleF
  *     }
  * }
  */
+
+internal var IrConstructor.constructorImplFunction: IrSimpleFunction? by irAttribute(followAttributeOwner = false)
+internal var IrSimpleFunction.constructor: IrConstructor? by irAttribute(followAttributeOwner = false)
+
+internal fun Context.getConstructorImpl(irConstructor: IrConstructor): IrSimpleFunction {
     return irConstructor::constructorImplFunction.getOrSetIfNull {
         irFactory.buildFun {
             name = irConstructor.name
