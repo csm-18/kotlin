@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.backend.konan.reportCompilationError
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrField
-import org.jetbrains.kotlin.ir.declarations.IrFunction
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.objcinterop.getExternalObjCClassBinaryName
 import org.jetbrains.kotlin.ir.objcinterop.isExternalObjCClass
@@ -130,9 +130,6 @@ internal interface IntrinsicGeneratorEnvironment {
 
     fun calculateLifetime(element: IrElement): Lifetime
 
-    fun evaluateCall(function: IrFunction, args: List<LLVMValueRef>, resultLifetime: Lifetime,
-                     superClass: IrClass? = null, resultSlot: LLVMValueRef? = null): LLVMValueRef
-
     fun evaluateExplicitArgs(expression: IrFunctionAccessExpression): List<LLVMValueRef>
 
     fun evaluateExpression(value: IrExpression, resultSlot: LLVMValueRef?): LLVMValueRef
@@ -195,16 +192,6 @@ internal class IntrinsicGenerator(private val environment: IntrinsicGeneratorEnv
                 val selector = (callSite.getValueArgument(0) as IrConst<*>).value as String
                 environment.functionGenerationContext.genObjCSelector(selector)
             }
-//            IntrinsicType.INIT_INSTANCE -> {
-//                val initializer = callSite.getValueArgument(1) as IrConstructorCall
-//                val thiz = environment.evaluateExpression(callSite.getValueArgument(0)!!, null)
-//                environment.evaluateCall(
-//                        initializer.symbol.owner,
-//                        listOf(thiz) + environment.evaluateExplicitArgs(initializer),
-//                        environment.calculateLifetime(initializer),
-//                )
-//                codegen.theUnitInstanceRef.llvm
-//            }
             else -> null
         }
     }

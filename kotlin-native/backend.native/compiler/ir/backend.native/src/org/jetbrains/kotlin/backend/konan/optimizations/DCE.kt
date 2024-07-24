@@ -23,7 +23,7 @@ internal fun dce(
         irModule: IrModuleFragment,
         moduleDFG: ModuleDFG,
         devirtualizationAnalysisResult: DevirtualizationAnalysis.AnalysisResult,
-): Set<IrFunction> {
+): Set<IrSimpleFunction> {
     val callGraph = CallGraphBuilder(
             context,
             irModule,
