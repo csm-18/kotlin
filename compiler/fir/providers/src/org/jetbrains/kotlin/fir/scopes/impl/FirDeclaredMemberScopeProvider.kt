@@ -27,12 +27,10 @@ import org.jetbrains.kotlin.utils.addToStdlib.runIf
 class FirDeclaredMemberScopeProvider(val useSiteSession: FirSession) : FirSessionComponent {
     private val declaredMemberCache: FirCache<FirClass, FirContainingNamesAwareScope, DeclaredMemberScopeContext> =
         useSiteSession.firCachesFactory.createCache { klass, context ->
-            createDeclaredMemberScope(
-                klass = klass,
-                useLazyNestedClassifierScope = context.useLazyNestedClassifierScope,
-                existingNames = context.existingNames,
-                symbolProvider = context.symbolProvider,
-            )
+            val data = runIf(context.useLazyNestedClassifierScope) {
+                LazyNestedClassifierScopeData(context.existingNames!!, context.symbolProvider!!)
+            }
+            createDeclaredMemberScope(klass = klass, lazyNestedClassifierScopeData = data)
         }
 
     private val nestedClassifierCache: FirCache<FirClass, FirNestedClassifierScope?, Nothing?> =
@@ -67,9 +65,7 @@ class FirDeclaredMemberScopeProvider(val useSiteSession: FirSession) : FirSessio
 
     private fun createDeclaredMemberScope(
         klass: FirClass,
-        useLazyNestedClassifierScope: Boolean,
-        existingNames: List<Name>?,
-        symbolProvider: FirSymbolProvider?,
+        lazyNestedClassifierScopeData: LazyNestedClassifierScopeData?,
     ): FirContainingNamesAwareScope {
         val origin = klass.origin
         return when {
@@ -82,13 +78,7 @@ class FirDeclaredMemberScopeProvider(val useSiteSession: FirSession) : FirSessio
                 ) ?: FirTypeScope.Empty
             }
             else -> {
-                val baseScope = FirClassDeclaredMemberScopeImpl(
-                    useSiteSession,
-                    klass,
-                    useLazyNestedClassifierScope,
-                    existingNames,
-                    symbolProvider
-                )
+                val baseScope = FirClassDeclaredMemberScopeImpl(useSiteSession, klass, lazyNestedClassifierScopeData)
                 val generatedScope = runIf(origin.fromSource || origin.generated) {
                     FirGeneratedClassDeclaredMemberScope.create(
                         useSiteSession,

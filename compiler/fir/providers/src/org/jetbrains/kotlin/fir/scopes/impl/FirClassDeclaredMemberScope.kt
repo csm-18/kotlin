@@ -20,19 +20,19 @@ import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.utils.SmartList
 
 abstract class FirClassDeclaredMemberScope(val classId: ClassId) : FirContainingNamesAwareScope() {
-
     override val scopeOwnerLookupNames: List<String> = SmartList(classId.asFqNameString())
 }
+
+data class LazyNestedClassifierScopeData(val existingNames: List<Name>, val symbolProvider: FirSymbolProvider)
 
 class FirClassDeclaredMemberScopeImpl(
     val useSiteSession: FirSession,
     klass: FirClass,
-    useLazyNestedClassifierScope: Boolean = false,
-    existingNames: List<Name>? = null,
-    symbolProvider: FirSymbolProvider? = null
+    lazyNestedClassifierScopeData: LazyNestedClassifierScopeData?
 ) : FirClassDeclaredMemberScope(klass.classId) {
-    private val nestedClassifierScope: FirContainingNamesAwareScope? = if (useLazyNestedClassifierScope) {
-        lazyNestedClassifierScope(klass.symbol.classId, existingNames!!, symbolProvider!!)
+    private val nestedClassifierScope: FirContainingNamesAwareScope? = if (lazyNestedClassifierScopeData != null) {
+        val (existingNames, symbolProvider) = lazyNestedClassifierScopeData
+        lazyNestedClassifierScope(klass.symbol.classId, existingNames, symbolProvider)
     } else {
         useSiteSession.nestedClassifierScope(klass)
     }
