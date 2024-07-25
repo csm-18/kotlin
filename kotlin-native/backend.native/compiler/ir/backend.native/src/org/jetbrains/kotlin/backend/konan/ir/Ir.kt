@@ -443,7 +443,7 @@ internal class KonanSymbols(
     val primitiveVarPrimaryConstructor = lookup.findPrimaryConstructor(lookup.findNestedClass(interopClass(InteropFqNames.cPrimitiveVarName), Name.identifier(InteropFqNames.TypeName))!!)!!
 
     val assertMode = topLevelClass(FqName("kotlin.AssertionMode"))
-    val assertIntrinsic = irBuiltIns.findProperties(Name.identifier("evaluateAssertionArguments"), FqName("kotlin")).single()
+    val currentAssertMode = irBuiltIns.findProperties(Name.identifier("currentAssertionMode"), FqName("kotlin")).single()
 
     private fun topLevelClass(fqName: FqName): IrClassSymbol = irBuiltIns.findClass(fqName.shortName(), fqName.parent())!!
 

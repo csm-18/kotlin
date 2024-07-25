@@ -15,7 +15,6 @@ internal expect fun assert(value: Boolean)
  */
 internal expect fun assert(value: Boolean, lazyMessage: () -> Any)
 
-// TODO consider to change these two fields into enum
 //@SinceKotlin("2.1")
 @PublishedApi
 internal enum class AssertionMode {
@@ -24,14 +23,7 @@ internal enum class AssertionMode {
 
 //@SinceKotlin("2.1") // TODO enable when version will be changed. Otherwise we get erorr because if -Werrro
 @PublishedApi
-internal val evaluateAssertionArguments: Boolean
-    get() {
-        throw NotImplementedError("Implemented as intrinsic")
-    }
-
-//@SinceKotlin("2.1")
-@PublishedApi
-internal val evaluateAssertionBody: Boolean
+internal val currentAssertionMode: AssertionMode
     get() {
         throw NotImplementedError("Implemented as intrinsic")
     }
