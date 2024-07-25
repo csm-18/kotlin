@@ -15,3 +15,4 @@ inline class InlineMutableSet(private val ms: MutableSet<IT>) : MutableSet<IT> {
     override fun removeAll(elements: Collection<IT>): Boolean = ms.removeAll(elements)
     override fun retainAll(elements: Collection<IT>): Boolean = ms.retainAll(elements)
 }
+org.jetbrains.kotlin.backend.konan.tests.ObjCExportHeaderGeneratorTest.test - functionWithThrowsAnnotation()([AA] test - functionWithThrowsAnnotation())
