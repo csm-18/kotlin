@@ -32,12 +32,12 @@ FILE fqName:<root> fileName:/kt43342.kt
             key: GET_VAR 'key: K of <root>.ControlFlowInfo declared in <root>.ControlFlowInfo.containsKey' type=K of <root>.ControlFlowInfo origin=null
     FUN DELEGATED_MEMBER name:containsValue visibility:public modality:OPEN <> ($this:<root>.ControlFlowInfo<K of <root>.ControlFlowInfo, V of <root>.ControlFlowInfo>, value:V of <root>.ControlFlowInfo) returnType:kotlin.Boolean
       overridden:
-        public abstract fun containsValue (value: V of kotlin.collections.Map): kotlin.Boolean declared in kotlin.collections.Map
+        public abstract fun containsValue (value: @[UnsafeVariance] V of kotlin.collections.Map): kotlin.Boolean declared in kotlin.collections.Map
       $this: VALUE_PARAMETER name:<this> type:<root>.ControlFlowInfo<K of <root>.ControlFlowInfo, V of <root>.ControlFlowInfo>
       VALUE_PARAMETER name:value index:0 type:V of <root>.ControlFlowInfo
       BLOCK_BODY
         RETURN type=kotlin.Nothing from='public open fun containsValue (value: V of <root>.ControlFlowInfo): kotlin.Boolean declared in <root>.ControlFlowInfo'
-          CALL 'public abstract fun containsValue (value: V of kotlin.collections.Map): kotlin.Boolean declared in kotlin.collections.Map' type=kotlin.Boolean origin=null
+          CALL 'public abstract fun containsValue (value: @[UnsafeVariance] V of kotlin.collections.Map): kotlin.Boolean declared in kotlin.collections.Map' type=kotlin.Boolean origin=null
             $this: GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:map type:kotlin.collections.Map<K of <root>.ControlFlowInfo, V of <root>.ControlFlowInfo> visibility:private [final]' type=kotlin.collections.Map<K of <root>.ControlFlowInfo, V of <root>.ControlFlowInfo> origin=null
               receiver: GET_VAR '<this>: <root>.ControlFlowInfo<K of <root>.ControlFlowInfo, V of <root>.ControlFlowInfo> declared in <root>.ControlFlowInfo.containsValue' type=<root>.ControlFlowInfo<K of <root>.ControlFlowInfo, V of <root>.ControlFlowInfo> origin=null
             value: GET_VAR 'value: V of <root>.ControlFlowInfo declared in <root>.ControlFlowInfo.containsValue' type=V of <root>.ControlFlowInfo origin=null
