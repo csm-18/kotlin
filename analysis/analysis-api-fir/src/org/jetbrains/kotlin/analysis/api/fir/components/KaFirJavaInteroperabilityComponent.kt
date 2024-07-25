@@ -78,7 +78,7 @@ import org.jetbrains.kotlin.psi
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
-import org.jetbrains.kotlin.types.model.SimpleTypeMarker
+import org.jetbrains.kotlin.types.model.RigidTypeMarker
 import org.jetbrains.kotlin.types.updateArgumentModeFromAnnotations
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.org.objectweb.asm.Type
@@ -462,7 +462,7 @@ private fun ConeKotlinType.asPsiTypeElement(
     allowErrorTypes: Boolean,
     forceValueClassResolution: Boolean,
 ): PsiTypeElement? {
-    if (this !is SimpleTypeMarker) return null
+    if (this !is RigidTypeMarker) return null
 
     if (!allowErrorTypes && (this is ConeErrorType)) return null
 
