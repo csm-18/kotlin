@@ -104,12 +104,7 @@ internal class TestProcessor (val context: Context) {
                 +irCall(registerFunction).apply {
                     dispatchReceiver = irGet(receiver)
                     val testKindEntry = it.kind.runtimeKind
-                    putValueArgument(0, IrGetEnumValueImpl(
-                            it.function.startOffset,
-                            it.function.endOffset,
-                            symbols.testFunctionKind.typeWithArguments(emptyList()),
-                            testKindEntry)
-                    )
+                    putValueArgument(0, irGetEnum(symbols.testFunctionKind, testKindEntry))
                     putValueArgument(1, IrFunctionReferenceImpl(
                             it.function.startOffset,
                             it.function.endOffset,

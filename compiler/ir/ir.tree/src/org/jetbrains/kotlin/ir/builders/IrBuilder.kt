@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.symbols.IrEnumEntrySymbol
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.name.Name
@@ -197,6 +198,9 @@ fun IrBuilderWithScope.irContinue(loop: IrLoop) =
 
 fun IrBuilderWithScope.irGetObject(classSymbol: IrClassSymbol) =
     IrGetObjectValueImpl(startOffset, endOffset, IrSimpleTypeImpl(classSymbol, false, emptyList(), emptyList()), classSymbol)
+
+fun IrBuilderWithScope.irGetEnum(enumSymbol: IrClassSymbol, enumEntrySymbol: IrEnumEntrySymbol) =
+    IrGetEnumValueImpl(startOffset, endOffset, IrSimpleTypeImpl(enumSymbol, false, emptyList(), emptyList()), enumEntrySymbol)
 
 // Also adds created variable into building block
 fun <T : IrElement> IrStatementsBuilder<T>.createTmpVariable(

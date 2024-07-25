@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.builders.irBlockBody
+import org.jetbrains.kotlin.ir.builders.irGetEnum
 import org.jetbrains.kotlin.ir.builders.irReturn
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBody
@@ -88,9 +89,7 @@ internal class CEnumCompanionGenerator(
 
     private fun generateAliasGetterBody(getter: IrSimpleFunction, entrySymbol: IrEnumEntrySymbol, enumClass: IrClass): IrBody =
             irBuiltIns.createIrBuilder(getter.symbol, SYNTHETIC_OFFSET, SYNTHETIC_OFFSET).irBlockBody {
-                +irReturn(
-                        IrGetEnumValueImpl(startOffset, endOffset, enumClass.defaultType, entrySymbol)
-                )
+                +irReturn(irGetEnum(enumClass.symbol, entrySymbol))
             }
 
     private fun declareEntryAliasProperty(propertyDescriptor: PropertyDescriptor, enumClass: IrClass): IrProperty {
