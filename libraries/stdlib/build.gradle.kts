@@ -625,6 +625,7 @@ dependencies {
 tasks {
     val metadataJar by existing(Jar::class) {
         archiveAppendix.set("metadata")
+        archiveExtension.set("klib")
     }
     val sourcesJar by existing(Jar::class) {
         archiveAppendix.set("metadata")
@@ -851,6 +852,7 @@ publishing {
                 }
                 artifact(tasks["metadataJar"]) {
                     classifier = "common"
+                    extension = "klib"
                 }
             }
             variant("metadataSourcesElementsFromJvm") {
