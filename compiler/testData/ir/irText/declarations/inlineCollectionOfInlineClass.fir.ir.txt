@@ -163,12 +163,12 @@ FILE fqName:<root> fileName:/inlineCollectionOfInlineClass.kt
             $this: GET_VAR '<this>: <root>.InlineMutableSet declared in <root>.InlineMutableSet.clear' type=<root>.InlineMutableSet origin=null
     FUN name:contains visibility:public modality:OPEN <> ($this:<root>.InlineMutableSet, element:<root>.IT) returnType:kotlin.Boolean [operator]
       overridden:
-        public abstract fun contains (element: E of kotlin.collections.MutableSet): kotlin.Boolean declared in kotlin.collections.MutableSet
+        public abstract fun contains (element: @[UnsafeVariance] E of kotlin.collections.MutableSet): kotlin.Boolean declared in kotlin.collections.MutableSet
       $this: VALUE_PARAMETER name:<this> type:<root>.InlineMutableSet
       VALUE_PARAMETER name:element index:0 type:<root>.IT
       BLOCK_BODY
         RETURN type=kotlin.Nothing from='public open fun contains (element: <root>.IT): kotlin.Boolean declared in <root>.InlineMutableSet'
-          CALL 'public abstract fun contains (element: E of kotlin.collections.MutableSet): kotlin.Boolean declared in kotlin.collections.MutableSet' type=kotlin.Boolean origin=null
+          CALL 'public abstract fun contains (element: @[UnsafeVariance] E of kotlin.collections.MutableSet): kotlin.Boolean declared in kotlin.collections.MutableSet' type=kotlin.Boolean origin=null
             $this: CALL 'private final fun <get-ms> (): kotlin.collections.MutableSet<<root>.IT> declared in <root>.InlineMutableSet' type=kotlin.collections.MutableSet<<root>.IT> origin=GET_PROPERTY
               $this: GET_VAR '<this>: <root>.InlineMutableSet declared in <root>.InlineMutableSet.contains' type=<root>.InlineMutableSet origin=null
             element: GET_VAR 'element: <root>.IT declared in <root>.InlineMutableSet.contains' type=<root>.IT origin=null
