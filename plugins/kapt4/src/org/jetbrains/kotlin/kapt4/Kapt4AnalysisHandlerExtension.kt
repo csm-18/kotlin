@@ -96,6 +96,7 @@ private class Kapt4AnalysisHandlerExtension : FirAnalysisHandlerExtension() {
                         else -> oldLanguageVersionSettings.getFlag(flag)
                     }
             }
+            put(JVMConfigurationKeys.RETAIN_OUTPUT_IN_MEMORY, getBoolean(CommonConfigurationKeys.REPORT_OUTPUT_FILES))
         }
 
         val groupedSources: GroupedKtSources = collectSources(updatedConfiguration, project, messageCollector)
