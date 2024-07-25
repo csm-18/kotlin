@@ -38,7 +38,7 @@ class FqNameUnsafe {
     }
 
     private fun compute() {
-        val lastDot = fqName.lastIndexOf('.')
+        val lastDot = indexOfLastDotWithBackticksSupport(fqName)
         if (lastDot >= 0) {
             shortName = Name.guessByFirstCharacter(fqName.substring(lastDot + 1))
             parent = FqNameUnsafe(fqName.substring(0, lastDot))
@@ -48,13 +48,28 @@ class FqNameUnsafe {
         }
     }
 
+    private fun indexOfLastDotWithBackticksSupport(fqName: String): Int {
+        var index = fqName.length - 1
+        var isBacktick = false
+
+        while (index >= 0) {
+            when {
+                fqName[index] == '.' && !isBacktick -> return index
+                fqName[index] == '`' -> isBacktick = !isBacktick
+                fqName[index] == '\\' -> index--
+            }
+
+            index--
+        }
+
+        return -1
+    }
+
     fun asString(): String {
         return fqName
     }
 
-    fun isSafe(): Boolean {
-        return safe != null || asString().indexOf('<') < 0
-    }
+    val isSafe: Boolean get() = safe != null || asString().indexOf('<') < 0
 
     fun toSafe(): FqName {
         safe?.let {
@@ -109,8 +124,28 @@ class FqNameUnsafe {
         }
     }
 
+    /**
+     * Consider using [properPathSegments].
+     */
     fun pathSegments(): List<Name> {
         return if (isRoot) emptyList() else SPLIT_BY_DOTS.split(fqName).map(STRING_TO_NAME)
+    }
+
+    /**
+     * Returns path segments (`[a,b,c]` for `a.b.c`), but unlike [pathSegments],
+     * gathers tries gathering information from [parent] and [shortName].
+     * This allows handling fqName parts containing dots as part of their name.
+     *
+     * The original function is left intact to avoid introducing possible unexpected behavior changes in K1.
+     */
+    fun properPathSegments(): MutableList<Name> {
+        if (isRoot) {
+            return ArrayList()
+        }
+
+        val parentSegments = parent().properPathSegments()
+        parentSegments.add(shortName())
+        return parentSegments
     }
 
     fun startsWith(segment: Name): Boolean {
