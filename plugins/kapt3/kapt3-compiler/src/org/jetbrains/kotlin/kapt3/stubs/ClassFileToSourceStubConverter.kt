@@ -68,7 +68,6 @@ import org.jetbrains.kotlin.load.java.sources.JavaSourceElement
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.isOneSegmentFQN
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
@@ -1396,10 +1395,9 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
 
         val values = when {
             firArgMapping.isNotEmpty() -> {
-                constantValues.mapNotNull { (parameterName, argumentValue) ->
-                    val name = Name.identifier(parameterName)
-                    val firArg = firArgMapping[name]
-                    convertAnnotationArgumentWithNameFir(containingClass, argumentValue, firArg, parameterName)
+                firArgMapping.mapNotNull { (name, firArg) ->
+                    val argumentValue = constantValues[name.asString()]
+                    convertAnnotationArgumentWithNameFir(containingClass, argumentValue, firArg, name.asString())
                 }
             }
             argMapping.isNotEmpty() -> {
@@ -1431,6 +1429,9 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
             }
             is FirVarargArgumentsExpression -> {
                 convertConstantValueArgumentsFir(containingClass, constantValue, value.arguments)
+            }
+            is FirGetClassCall -> {
+                convertFirGetClassCall(value)
             }
             else -> {
                 convertLiteralExpression(containingClass, constantValue)
