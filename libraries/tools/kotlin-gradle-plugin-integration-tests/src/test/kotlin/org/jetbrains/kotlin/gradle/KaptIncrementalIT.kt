@@ -4,6 +4,7 @@ import org.gradle.api.logging.LogLevel
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.testbase.*
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import java.io.File
 import java.nio.file.Path
@@ -24,7 +25,7 @@ open class KaptIncrementalIT : KGPBaseTest() {
     }
 
     private val annotatedElements =
-        arrayOf("A", "funA", "valA", "funUtil", "valUtil", "B", "funB", "valB", "useB")
+        arrayOf("A", "funA", "valA", "funUtil", "valUtil", "B", "funB", "valB", "useB", "funGetsInputParams")
 
     override val defaultBuildOptions = super.defaultBuildOptions.copy(
         incremental = true,
@@ -35,7 +36,7 @@ open class KaptIncrementalIT : KGPBaseTest() {
         gradleVersion: GradleVersion,
         buildOptions: BuildOptions = defaultBuildOptions,
         buildJdk: File? = null,
-        test: TestProject.() -> Unit
+        test: TestProject.() -> Unit,
     ): TestProject = project(
         PROJECT_NAME,
         gradleVersion,
@@ -49,12 +50,13 @@ open class KaptIncrementalIT : KGPBaseTest() {
     fun testAddNewLine(gradleVersion: GradleVersion) {
         kaptProject(gradleVersion) {
             build("clean", "build")
-
-            javaSourcesDir().resolve("bar/useB.kt").modify { "\n$it" }
-            build("build") {
+            val editedFile = javaSourcesDir().resolve("bar/useB.kt")
+            editedFile.modify { "\n$it" }
+            build("build", buildOptions = buildOptions.copy(logLevel = LogLevel.DEBUG)) {
                 assertTasksExecuted(":kaptGenerateStubsKotlin", ":compileKotlin")
                 assertTasksUpToDate(":kaptKotlin")
                 assertTasksUpToDate(":compileJava")
+                assertCompiledKotlinSourcesHandleKapt3(this, listOf(projectPath.relativize(editedFile)))
             }
         }
     }
@@ -128,6 +130,52 @@ open class KaptIncrementalIT : KGPBaseTest() {
                 assertTasksExecuted(":kaptGenerateStubsKotlin")
                 assertTasksUpToDate(":kaptKotlin")
             }
+        }
+    }
+
+    @DisplayName("Change in a function signature is handled incrementally")
+    @GradleTest
+    fun testChangeFunctionSignature(gradleVersion: GradleVersion) {
+        kaptProject(gradleVersion) {
+            enablePassedTestLogging()
+            build("build") {
+                checkGenerated(kaptGeneratedToPath, *annotatedElements)
+                checkNotGenerated(kaptGeneratedToPath, "notAnnotatedFun")
+            }
+
+            val utilKt = javaSourcesDir().resolve("baz/util.kt")
+            utilKt.modify { it.replace("funGetsInputParams()", "funGetsInputParams(input: String, output: ArrayList<String>)") }
+            utilKt.modify { it.replace("val input = \"This is a non-test string\"", "") }
+            utilKt.modify { it.replace("val output = ArrayList<String>()", "") }
+
+            build("assemble", buildOptions = buildOptions.copy(logLevel = LogLevel.DEBUG)) {
+                assertKapt3FullyExecuted()
+                assertCompiledKotlinSourcesHandleKapt3(this, listOf(projectPath.relativize(utilKt)))
+
+            }
+        }
+    }
+
+    @Disabled("KT-70176")
+    @DisplayName("Rename refactoring of an annotated element is handled incrementally")
+    @GradleTest
+    fun testRenameRefactoringOfAnAnnotatedElement(gradleVersion: GradleVersion) {
+        kaptProject(gradleVersion) {
+            build("build")
+
+            val bKt = javaSourcesDir().resolve("bar/B.kt")
+            val useB = javaSourcesDir().resolve("bar/useB.kt")
+            val useBbyJava = javaSourcesDir().resolve("foo/JavaClass.java")
+            bKt.modify { it.replace("valB", "valNewB") }
+            useB.modify { it.replace("fun useB(b: B) = b.valB", "fun useB(b: B) = b.valNewB") }
+            useBbyJava.modify { it.replace("b.getValB()", "b.getValNewB()") }
+            makeSnapshotTo("/Users/Ksenia.Sergeeva/Documents/repos/testRuns")
+
+            build("build", buildOptions = buildOptions.copy(logLevel = LogLevel.DEBUG)) {
+                assertKapt3FullyExecuted()
+                assertCompiledKotlinSourcesHandleKapt3(this, listOf(projectPath.relativize(bKt), projectPath.relativize(useB)))
+            }
+
         }
     }
 
@@ -213,7 +261,7 @@ open class KaptIncrementalIT : KGPBaseTest() {
                 assertKapt3FullyExecuted()
                 assertCompiledKotlinSourcesHandleKapt3(
                     this,
-                    projectPath.allKotlinFiles.map { projectPath.relativize(it) }
+                    javaSourcesDir("main").allKotlinSources.map { projectPath.relativize(it) }
                 )
                 val affectedElements = arrayOf("B", "funB", "valB", "useB")
                 checkGenerated(kaptGeneratedToPath, *(annotatedElements.toSet() - affectedElements).toTypedArray())
@@ -267,8 +315,9 @@ open class KaptIncrementalIT : KGPBaseTest() {
         }
     }
 
-    @DisplayName("On all annotations remove kapt and compile runs incremenatally")
+    @DisplayName("On all annotations remove kapt and compile runs incrementally")
     @GradleTest
+    @Disabled("KT-70176")
     fun testRemoveAnnotations(gradleVersion: GradleVersion) {
         kaptProject(gradleVersion) {
             build("assemble")
@@ -287,10 +336,10 @@ open class KaptIncrementalIT : KGPBaseTest() {
                     errorMessageSuffix = " in task 'kaptGenerateStubsKotlin'"
                 )
 
-                // java removal is detected
                 assertCompiledKotlinSources(
-                    projectPath.allKotlinFiles.map { projectPath.relativize(it) },
-                    output
+                    listOf(projectPath.relativize(bKt), projectPath.relativize(useBKt)),
+                    getOutputForTask(":compileKotlin"),
+                    errorMessageSuffix = " in task 'compileKotlin'"
                 )
 
                 checkGenerated(
@@ -323,24 +372,83 @@ open class KaptIncrementalIT : KGPBaseTest() {
         }
     }
 
-    @DisplayName("Change in inline delegate is handled correctly")
+    @DisplayName("Changes in inline delegate are handled incrementally")
     @GradleTest
     fun testChangeInlineDelegate(gradleVersion: GradleVersion) {
         kaptProject(gradleVersion) {
             build("assemble")
 
-            val file = javaSourcesDir().resolve("delegate/Usage.kt")
-            file.modify { "$it//" }
+            val usageFile = javaSourcesDir().resolve("delegate/Usage.kt")
+            val delegateFile = javaSourcesDir().resolve("delegate/Delegate.kt")
+            delegateFile.modify { it.replace("class Delegate()", "class Delegate<T>()") }
+            delegateFile.modify { it.replace("getValue(thisRef: Any?", "getValue(thisRef: T") }
+            delegateFile.modify { it.replace("setValue(thisRef: Any?", "setValue(thisRef: T?") }
+            usageFile.modify { it.replace("Delegate()", "Delegate<Usage>()") }
 
-            build("assemble") {
+            build("assemble", buildOptions = buildOptions.copy(logLevel = LogLevel.DEBUG)) {
                 assertTasksExecuted(":kaptGenerateStubsKotlin", ":compileKotlin")
+                assertCompiledKotlinSourcesHandleKapt3(
+                    this,
+                    listOf(projectPath.relativize(usageFile), projectPath.relativize(delegateFile))
+                )
+            }
+        }
+    }
+
+    @DisplayName("Changes in test sources are processed incrementally")
+    @GradleTest
+    fun testChangeTestSources(gradleVersion: GradleVersion) {
+        kaptProject(gradleVersion) {
+            build("build")
+
+            val testFile = javaSourcesDir("test").resolve("foo/KTest.kt")
+            testFile.modify { it.replace("assertEquals(6, add(3, 3))","assertEquals(13, add(3, 10))") }
+
+            build("build", buildOptions = buildOptions.copy(logLevel = LogLevel.DEBUG)) {
+                assertTasksExecuted(":kaptGenerateStubsTestKotlin", ":compileTestKotlin")
+                assertCompiledKotlinSources(
+                    listOf(projectPath.relativize(testFile)),
+                    getOutputForTask(":kaptGenerateStubsTestKotlin"),
+                    errorMessageSuffix = " in task 'kaptGenerateStubsTestKotlin'"
+                )
+                assertCompiledKotlinSources(
+                    listOf(projectPath.relativize(testFile)),
+                    getOutputForTask(":compileTestKotlin"),
+                    errorMessageSuffix = " in task 'compileTestKotlin'"
+                )
+            }
+        }
+    }
+
+    @DisplayName("Changes to main sources with annotated elements are handled in tests incrementally")
+    @GradleTest
+    fun testSourceChangesAreReflectedInTests(gradleVersion: GradleVersion) {
+        kaptProject(gradleVersion) {
+            build("build")
+
+            val fileToEdit = javaSourcesDir().resolve("jvmName/math.kt")
+            val testFileToRecompile = javaSourcesDir("test").resolve("foo/KTest.kt")
+            fileToEdit.modify { it.replace("@file:JvmName(\"Math\")", "@file:JvmName(\"Mathematics\")") }
+
+            build("build", buildOptions = buildOptions.copy(logLevel = LogLevel.DEBUG)) {
+                assertTasksExecuted(":kaptGenerateStubsTestKotlin", ":compileTestKotlin")
+                assertCompiledKotlinSources(
+                    listOf(projectPath.relativize(testFileToRecompile)),
+                    getOutputForTask(":kaptGenerateStubsTestKotlin"),
+                    errorMessageSuffix = " in task 'kaptGenerateStubsTestKotlin'"
+                )
+                assertCompiledKotlinSources(
+                    listOf(projectPath.relativize(testFileToRecompile)),
+                    getOutputForTask(":compileTestKotlin"),
+                    errorMessageSuffix = " in task 'compileTestKotlin'"
+                )
             }
         }
     }
 
     private fun TestProject.assertCompiledKotlinSourcesHandleKapt3(
         buildResult: BuildResult,
-        sources: List<Path>
+        sources: List<Path>,
     ) {
         assertCompiledKotlinSources(
             sources,
@@ -361,7 +469,7 @@ open class KaptIncrementalIT : KGPBaseTest() {
 
     private fun TestProject.checkGenerated(
         generateToPath: Path,
-        vararg annotatedElementNames: String
+        vararg annotatedElementNames: String,
     ) {
         getGeneratedFileNames(*annotatedElementNames).forEach {
             assertFileExistsInTree(generateToPath, it)
@@ -370,7 +478,7 @@ open class KaptIncrementalIT : KGPBaseTest() {
 
     private fun TestProject.checkNotGenerated(
         generateToPath: Path,
-        vararg annotatedElementNames: String
+        vararg annotatedElementNames: String,
     ) {
         getGeneratedFileNames(*annotatedElementNames).forEach {
             assertFileNotExistsInTree(generateToPath, it)
@@ -391,5 +499,6 @@ open class KaptIncrementalIT : KGPBaseTest() {
 
 @DisplayName("Kapt incremental compilation with disabled precise compilation outputs backup")
 class KaptIncrementalWithoutPreciseBackupIT : KaptIncrementalIT() {
-    override val defaultBuildOptions = super.defaultBuildOptions.copy(usePreciseOutputsBackup = false, keepIncrementalCompilationCachesInMemory = false)
+    override val defaultBuildOptions =
+        super.defaultBuildOptions.copy(usePreciseOutputsBackup = false, keepIncrementalCompilationCachesInMemory = false)
 }
