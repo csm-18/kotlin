@@ -4,9 +4,13 @@
       <verify-metadata>true</verify-metadata>
       <verify-signatures>false</verify-signatures>
       <trusted-artifacts>
+         <trust group="androidx.annotation" name="annotation-jvm" />
+         <trust group="androidx.collection" name="collection-jvm" />
          <trust group="androidx.compose.runtime" name="runtime"/>
+         <trust group="androidx.compose.runtime" name="runtime-jvmstubs"/>
          <trust group="androidx.compose.runtime" name="runtime-desktop"/>
          <trust group="androidx.compose.runtime" name="runtime-test-utils"/>
+         <trust group="androidx.compose.runtime" name="runtime-test-utils-jvmstubs"/>
          <trust group="androidx.compose.runtime" name="runtime-test-utils-desktop"/>
          <trust file=".*-javadoc[.]jar" regex="true"/>
          <trust file=".*-sources[.]jar" regex="true"/>
