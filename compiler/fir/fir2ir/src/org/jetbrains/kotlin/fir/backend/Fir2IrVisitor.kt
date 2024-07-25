@@ -72,6 +72,8 @@ class Fir2IrVisitor(
 
     private val operatorGenerator = OperatorExpressionGenerator(c, this, conversionScope)
 
+    internal var currentFile: FirFile? = null
+
     private var _annotationMode: Boolean = false
     val annotationMode: Boolean
         get() = _annotationMode
@@ -103,15 +105,20 @@ class Fir2IrVisitor(
     }
 
     override fun visitFile(file: FirFile, data: Any?): IrFile {
-        val irFile = declarationStorage.getIrFile(file)
-        conversionScope.withParent(irFile) {
-            file.declarations.forEach {
-                it.toIrDeclaration()
+        currentFile = file
+        try {
+            val irFile = declarationStorage.getIrFile(file)
+            conversionScope.withParent(irFile) {
+                file.declarations.forEach {
+                    it.toIrDeclaration()
+                }
+                annotationGenerator.generate(this, file)
+                metadata = FirMetadataSource.File(file)
             }
-            annotationGenerator.generate(this, file)
-            metadata = FirMetadataSource.File(file)
+            return irFile
+        } finally {
+            currentFile = null
         }
-        return irFile
     }
 
     private fun FirDeclaration.toIrDeclaration(): IrDeclaration =
