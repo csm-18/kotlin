@@ -57,6 +57,14 @@ object KtDefaultErrorMessagesSerialization : BaseDiagnosticRendererFactory() {
             FirDiagnosticRenderers.RENDER_TYPE
         )
         put(
+            FirSerializationErrors.COMPANION_OBJECT_IS_SERIALIZABLE_INSIDE_SERIALIZABLE_CLASS,
+            "This class is a Companion object for a @Serializable class {0}. Companion objects of serializable classes can't be serializable with other serializers," +
+                    "because this may lead to runtime errors and incorrect results. The only case where this is allowed is when both class {0} and its companion" +
+                    "have the same serializer specified in @Serializable(with = ...) annotation. " +
+                    "This warning will be promoted to error in the future. See https://youtrack.jetbrains.com/issue/KT-70110 for details.",
+            FirDiagnosticRenderers.DECLARATION_NAME
+        )
+        put(
             FirSerializationErrors.EXPLICIT_SERIALIZABLE_IS_REQUIRED,
             "Explicit @Serializable annotation on enum class is required when @SerialName or @SerialInfo annotations are used on its members."
         )
