@@ -344,7 +344,7 @@ public abstract class FileBasedKotlinClass implements KotlinJvmBinaryClass {
         Collections.reverse(classes);
 
         FqName packageFqName = outermostClassFqName.parent();
-        FqName relativeClassName = FqName.fromSegments(classes);
+        FqName relativeClassName = FqName.Companion.fromSegments(classes);
         return new ClassId(packageFqName, relativeClassName, local);
     }
 
