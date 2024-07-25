@@ -134,29 +134,35 @@ static_assert(alignof(ArrayHeader) <= kotlin::kObjectAlignment);
 
 namespace kotlin {
 
-struct ObjectBody;
-struct ArrayBody;
-
-template <>
-struct type_layout::descriptor<ObjectBody> {
-    class type {
+struct ObjectBody {
+    class descriptor {
     public:
         using value_type = ObjectBody;
 
-        explicit type(const TypeInfo* typeInfo) noexcept : size_(typeInfo->instanceSize_ - sizeof(ObjHeader)) {}
+        explicit descriptor(const TypeInfo* typeInfo) noexcept : typeInfo_(typeInfo) {}
 
         static constexpr size_t alignment() noexcept { return kObjectAlignment; }
-        uint64_t size() const noexcept { return size_; }
+        uint64_t size() const noexcept { return typeInfo_->instanceSize_; }
 
         value_type* construct(uint8_t* ptr) noexcept {
-            RuntimeAssert(isZeroed(std_support::span<uint8_t>(ptr, size_)), "ObjectBodyDescriptor::construct@%p memory is not zeroed", ptr);
+            RuntimeAssert(isZeroed(std_support::span<uint8_t>(ptr, size())), "Object::descriptor::construct@%p memory is not zeroed", ptr);
             return reinterpret_cast<value_type*>(ptr);
         }
 
     private:
-        uint64_t size_;
+        const TypeInfo* typeInfo_;
     };
+
+    static ObjectBody* from(ObjHeader* object) noexcept { return reinterpret_cast<ObjectBody*>(object); }
+
+    ObjHeader* header() noexcept { return reinterpret_cast<ObjHeader*>(this); }
+
+private:
+    ObjectBody() = delete;
+    ~ObjectBody() = delete;
 };
+
+struct ArrayBody;
 
 template <>
 struct type_layout::descriptor<ArrayBody> {

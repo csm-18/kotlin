@@ -36,7 +36,7 @@ ObjHeader* CustomAllocator::CreateObject(const TypeInfo* typeInfo) noexcept {
     auto descriptor = HeapObject::make_descriptor(typeInfo);
     auto size = AllocationSize::bytesAtLeast(descriptor.size());
     auto& heapObject = *descriptor.construct(Allocate(size));
-    ObjHeader* object = heapObject.header(descriptor).object();
+    ObjHeader* object = heapObject.object();
     if (typeInfo->flags_ & TF_HAS_FINALIZER) {
         auto* extraObject = CreateExtraObject();
         object->typeInfoOrMeta_ = reinterpret_cast<TypeInfo*>(new (extraObject) mm::ExtraObjectData(object, typeInfo));

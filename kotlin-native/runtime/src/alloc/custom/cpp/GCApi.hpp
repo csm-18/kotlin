@@ -22,33 +22,25 @@
 
 namespace kotlin::alloc {
 
-struct HeapObjHeader {
-    using descriptor = type_layout::Composite<HeapObjHeader, gc::GC::ObjectData, ObjHeader>;
-
-    static HeapObjHeader& from(gc::GC::ObjectData& objectData) noexcept { return *descriptor().fromField<0>(&objectData); }
-
-    static HeapObjHeader& from(ObjHeader* object) noexcept {
-        RuntimeAssert(object->heap(), "Object %p does not reside in the heap", object);
-        return *descriptor().fromField<1>(object);
-    }
-
-    gc::GC::ObjectData& objectData() noexcept { return *descriptor().field<0>(this).second; }
-
-    ObjHeader* object() noexcept { return descriptor().field<1>(this).second; }
-
-private:
-    HeapObjHeader() = delete;
-    ~HeapObjHeader() = delete;
-};
-
 struct HeapObject {
-    using descriptor = type_layout::Composite<HeapObject, HeapObjHeader, ObjectBody>;
+    using descriptor = type_layout::Composite<HeapObject, gc::GC::ObjectData, ObjectBody>;
 
     static descriptor make_descriptor(const TypeInfo* typeInfo) noexcept {
         return descriptor{{}, type_layout::descriptor_t<ObjectBody>{typeInfo}};
     }
 
-    HeapObjHeader& header(descriptor descriptor) noexcept { return *descriptor.field<0>(this).second; }
+    static HeapObject& from(gc::GC::ObjectData& objectData) noexcept {
+        return *make_descriptor(nullptr).fromField<0>(&objectData);
+    }
+
+    static HeapObject& from(ObjHeader* object) noexcept {
+        RuntimeAssert(object->heap(), "Object %p does not reside in the heap", object);
+        return *make_descriptor(nullptr).fromField<1>(ObjectBody::from(object));
+    }
+
+    gc::GC::ObjectData& objectData() noexcept { return *make_descriptor(nullptr).field<0>(this).second; }
+
+    ObjHeader* object() noexcept { return make_descriptor(nullptr).field<1>(this).second->header(); }
 
 private:
     HeapObject() = delete;

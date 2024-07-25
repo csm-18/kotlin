@@ -455,30 +455,20 @@ class ObjectFactory : private Pinned {
     using Allocator = typename Traits::Allocator;
     using ObjectData = typename Traits::ObjectData;
 
-    struct HeapObjHeader {
-        using descriptor = type_layout::Composite<HeapObjHeader, ObjectData, ObjHeader>;
-
-        static HeapObjHeader& from(ObjectData& objectData) noexcept { return *descriptor().template fromField<0>(&objectData); }
-
-        static HeapObjHeader& from(ObjHeader* object) noexcept { return *descriptor().template fromField<1>(object); }
-
-        ObjectData& objectData() noexcept { return *descriptor().template field<0>(this).second; }
-
-        ObjHeader* object() noexcept { return descriptor().template field<1>(this).second; }
-
-    private:
-        HeapObjHeader() = delete;
-        ~HeapObjHeader() = delete;
-    };
-
     struct HeapObject {
-        using descriptor = type_layout::Composite<HeapObject, HeapObjHeader, ObjectBody>;
+        using descriptor = type_layout::Composite<HeapObject, ObjectData, ObjectBody>;
 
         static descriptor make_descriptor(const TypeInfo* typeInfo) noexcept {
             return descriptor{{}, type_layout::descriptor_t<ObjectBody>{typeInfo}};
         }
 
-        HeapObjHeader& header(descriptor descriptor) noexcept { return *descriptor.template field<0>(this).second; }
+        static HeapObject& from(ObjectData& objectData) noexcept { return *make_descriptor(nullptr).template fromField<0>(&objectData); }
+
+        static HeapObject& from(ObjHeader* object) noexcept { return *make_descriptor(nullptr).template fromField<1>(ObjectBody::from(object)); }
+
+        ObjectData& objectData() noexcept { return *make_descriptor(nullptr).template field<0>(this).second; }
+
+        ObjHeader* object() noexcept { return make_descriptor(nullptr).template field<1>(this).second->header(); }
 
     private:
         HeapObject() = delete;
@@ -530,7 +520,7 @@ class ObjectFactory : private Pinned {
 
     struct DataSizeProvider {
         static size_t GetDataSize(uint8_t* data) noexcept {
-            return GetDataSizeForAllocated(reinterpret_cast<HeapObjHeader*>(data)->object());
+            return GetDataSizeForAllocated(reinterpret_cast<HeapObject*>(data)->object());
         }
     };
 
@@ -543,7 +533,7 @@ public:
 
         static NodeRef From(ObjHeader* object) noexcept {
             RuntimeAssert(object->heap(), "Must be a heap object");
-            return NodeRef(Storage::Node::FromData(reinterpret_cast<uint8_t*>(&HeapObjHeader::from(object))));
+            return NodeRef(Storage::Node::FromData(reinterpret_cast<uint8_t*>(&HeapObject::from(object))));
         }
 
         static NodeRef From(ArrayHeader* array) noexcept {
@@ -552,14 +542,14 @@ public:
         }
 
         static NodeRef From(ObjectData& objectData) noexcept {
-            return NodeRef(Storage::Node::FromData(reinterpret_cast<uint8_t*>(&HeapObjHeader::from(objectData))));
+            return NodeRef(Storage::Node::FromData(reinterpret_cast<uint8_t*>(&HeapObject::from(objectData))));
         }
 
         NodeRef* operator->() noexcept { return this; }
 
-        ObjectData& ObjectData() noexcept { return reinterpret_cast<HeapObjHeader*>(node_.Data())->objectData(); }
+        ObjectData& ObjectData() noexcept { return reinterpret_cast<HeapObject*>(node_.Data())->objectData(); }
 
-        ObjHeader* GetObjHeader() noexcept { return reinterpret_cast<HeapObjHeader*>(node_.Data())->object(); }
+        ObjHeader* GetObjHeader() noexcept { return reinterpret_cast<HeapObject*>(node_.Data())->object(); }
 
         bool operator==(const NodeRef& rhs) const noexcept { return &node_ == &rhs.node_; }
 
@@ -598,7 +588,7 @@ public:
             RuntimeAssert(!typeInfo->IsArray(), "Must not be an array");
             auto descriptor = HeapObject::make_descriptor(typeInfo);
             auto& heapObject = *descriptor.construct(producer_.Insert(descriptor.size()).Data());
-            ObjHeader* object = heapObject.header(descriptor).object();
+            ObjHeader* object = heapObject.object();
             object->typeInfoOrMeta_ = const_cast<TypeInfo*>(typeInfo);
             // TODO: Consider supporting TF_IMMUTABLE: mark instance as frozen upon creation.
             return object;
