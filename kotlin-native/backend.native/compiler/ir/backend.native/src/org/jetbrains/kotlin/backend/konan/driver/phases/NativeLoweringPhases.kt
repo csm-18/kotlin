@@ -586,10 +586,19 @@ private val objectClassesPhase = createFileLoweringPhase(
         description = "Object classes lowering"
 )
 
-private val assertsRemovalPhase = createFileLoweringPhase(
-        lowering = ::AssertRemovalLowering,
-        name = "AssertsRemoval",
-        description = "Asserts removal"
+private val assertionWrapperPhase = createFileLoweringPhase(
+        lowering = ::NativeAssertionWrapperLowering,
+        name = "AssertionWrapperLowering",
+        description = "Wraps call to `assert(someCondition()) {...}` into if statement"
+)
+
+private val assertionRemoverPhase = createFileLoweringPhase(
+        lowering = { context: NativeGenerationState ->
+            NativeAssertionRemoverLowering(context.context, context.config.assertsEnabled)
+        },
+        name = "AssertionRemoverLowering",
+        description = "Replaces `currentAssertionMode` intrinsic with actual value, depending on the assertion mode",
+        prerequisite = setOf(assertionWrapperPhase),
 )
 
 private val constEvaluationPhase = createFileLoweringPhase(
@@ -604,6 +613,7 @@ private val constEvaluationPhase = createFileLoweringPhase(
 
 internal fun PhaseEngine<NativeGenerationState>.getLoweringsUpToAndIncludingSyntheticAccessors(): LoweringList = listOfNotNull(
         lowerBeforeInlinePhase,
+        assertionWrapperPhase,
         lateinitPhase,
         sharedVariablesPhase,
         lowerOuterThisInInlineFunctionsPhase,
@@ -618,7 +628,7 @@ internal fun PhaseEngine<NativeGenerationState>.getLoweringsUpToAndIncludingSynt
 internal fun PhaseEngine<NativeGenerationState>.getLoweringsAfterInlining(): LoweringList = listOfNotNull(
         removeExpectDeclarationsPhase,
         stripTypeAliasDeclarationsPhase,
-        assertsRemovalPhase.takeUnless { context.config.assertsEnabled },
+        assertionRemoverPhase,
         constEvaluationPhase,
         provisionalFunctionExpressionPhase,
         postInlinePhase,
