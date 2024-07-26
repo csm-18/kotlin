@@ -54,7 +54,7 @@ apiValidation {
     additionalSourceSets.add("common")
 }
 
-val unpublishedCompilerRuntimeDependencies = listOf(
+val unpublishedCompilerRuntimeDependencies = listOf( // TODO: remove in KT-70247
     ":compiler:cli", // for MessageRenderer, related to MessageCollector usage
     ":compiler:cli-common", // for compiler arguments setup, for logging via MessageCollector, CompilerSystemProperties, ExitCode
     ":compiler:compiler.version", // for user projects buildscripts, `loadCompilerVersion`
@@ -70,7 +70,7 @@ val unpublishedCompilerRuntimeDependencies = listOf(
     ":wasm:wasm.config", // for k/js task
 )
 
-val intellijRuntimeDependencies = listOf(
+val intellijRuntimeDependencies = listOf( // TODO: remove in KT-70252
     intellijUtilRt(), // for kapt (PathUtil.getJdkClassesRoots)
     intellijPlatformUtil(), // for kapt (JavaVersion), KotlinToolRunner (escapeStringCharacters)
     intellijPlatformUtilBase(), // for kapt (PathUtil.getJdkClassesRoots)
@@ -116,10 +116,10 @@ dependencies {
     commonCompileOnly(libs.android.gradle.plugin.builder) { isTransitive = false }
     commonCompileOnly(libs.android.gradle.plugin.builder.model) { isTransitive = false }
     commonCompileOnly(libs.android.tools.common) { isTransitive = false }
-    commonCompileOnly(intellijPlatformUtil())  {
+    commonCompileOnly(intellijPlatformUtil()) { // TODO: remove in KT-70252
         isTransitive = false
     }
-    commonCompileOnly(intellijUtilRt())  {
+    commonCompileOnly(intellijUtilRt()) { // TODO: remove in KT-70252
         isTransitive = false
     }
     commonCompileOnly(commonDependency("org.jetbrains.teamcity:serviceMessages"))
@@ -135,12 +135,12 @@ dependencies {
 
     commonImplementation(project(":kotlin-gradle-plugin-idea"))
     commonImplementation(project(":kotlin-gradle-plugin-idea-proto"))
-    commonImplementation(project(":native:kotlin-klib-commonizer-api"))
+    commonImplementation(project(":native:kotlin-klib-commonizer-api")) // TODO: consider removing in KT-70247
     commonImplementation(project(":compiler:build-tools:kotlin-build-tools-api"))
     commonImplementation(project(":compiler:build-tools:kotlin-build-statistics"))
-    commonImplementation(project(":kotlin-util-klib-metadata"))
+    commonImplementation(project(":kotlin-util-klib-metadata")) // TODO: consider removing in KT-70247
 
-    commonRuntimeOnly(project(":kotlin-compiler-runner")) {
+    commonRuntimeOnly(project(":kotlin-compiler-runner")) { // TODO: consider removing in KT-70247
         // Excluding dependency with not-relocated 'com.intellij' types
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-build-common")
         exclude(group = "org.jetbrains.kotlin", module = "kotlin-compiler-embeddable")
