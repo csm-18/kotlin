@@ -7,6 +7,12 @@ import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
+/**
+ * This precompiled script plugin is intended to be a temporary solution for KT-70247.
+ * It should be removed after a proper resolution is provided.
+ * Also, update the mention of this plugin from `gradle.properties`
+ */
+
 plugins {
     kotlin("jvm")
 }
