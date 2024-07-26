@@ -8,7 +8,7 @@ fun invokeLater(x: () -> Int, y: String) {
 fun immutableInitAfterCapture() {
     val x: String
     invokeLater(
-        x = { x.length },
+        x = { <!UNINITIALIZED_VARIABLE!>x<!>.length },
         y = if (true) { x = ""; "" } else { x = ""; "" },
     )
 }

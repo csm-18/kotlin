@@ -64,6 +64,8 @@ class ControlFlowGraphBuilder {
     private val argumentListSplitNodes: Stack<SplitPostponedLambdasNode?> = stackOf()
     private val postponedAnonymousFunctionNodes =
         mutableMapOf<FirFunctionSymbol<*>, Pair<CFGNode<*>, PostponedLambdaExitNode?>>()
+    private val anonymousFunctionCaptureNodes =
+        mutableMapOf<FirFunctionSymbol<*>, AnonymousFunctionCaptureNode>()
     private val postponedLambdaExits: Stack<PostponedLambdas> = stackOf()
 
     private val loopConditionEnterNodes: MutableMap<FirLoop, LoopConditionEnterNode> = mutableMapOf()
@@ -251,14 +253,22 @@ class ControlFlowGraphBuilder {
     // for them may not have been computed yet. Instead, these edges are redirected
     // into the outer call. The outermost call *has* to be completed, so at some point
     // all data will be unified in a single call node.
-    fun enterAnonymousFunctionExpression(anonymousFunctionExpression: FirAnonymousFunctionExpression): AnonymousFunctionExpressionNode? {
+    fun enterAnonymousFunctionExpression(anonymousFunctionExpression: FirAnonymousFunctionExpression): Pair<AnonymousFunctionExpressionNode?, AnonymousFunctionCaptureNode?> {
         val symbol = anonymousFunctionExpression.anonymousFunction.symbol
-        val enterNode = postponedAnonymousFunctionNodes[symbol]?.first
-            ?: return createAnonymousFunctionExpressionNode(anonymousFunctionExpression).also {
+        val enterNode = postponedAnonymousFunctionNodes[symbol]?.first ?: run {
+            val expressionNode = createAnonymousFunctionExpressionNode(anonymousFunctionExpression).also {
                 addNewSimpleNode(it)
                 // Not in an argument list, won't be called in-place, don't need an exit node.
                 postponedAnonymousFunctionNodes[symbol] = it to null
             }
+            return expressionNode to null
+        }
+
+        val captureNode = createAnonymousFunctionCaptureNode(anonymousFunctionExpression).also {
+            addNewSimpleNode(it)
+            anonymousFunctionCaptureNodes[symbol] = it
+        }
+
         val exitNode = createPostponedLambdaExitNode(anonymousFunctionExpression)
         // Ideally we'd only add this edge in `exitAnonymousFunction`, but unfortunately it's possible
         // that the function won't be visited for so long, we'll exit the current graph before that.
@@ -266,7 +276,8 @@ class ControlFlowGraphBuilder {
         addEdge(enterNode, exitNode)
         postponedAnonymousFunctionNodes[symbol] = enterNode to exitNode
         postponedLambdaExits.top().exits.add(exitNode to EdgeKind.Forward)
-        return null
+
+        return null to captureNode
     }
 
     fun enterAnonymousFunction(anonymousFunction: FirAnonymousFunction): FunctionEnterNode {
@@ -276,7 +287,11 @@ class ControlFlowGraphBuilder {
             ControlFlowGraph.Kind.AnonymousFunction
         return enterGraph(anonymousFunction, "<anonymous>", graphKind) {
             createFunctionEnterNode(it) to createFunctionExitNode(it).also { exit -> exitTargetsForReturn[anonymousFunction.symbol] = exit }
-        }.also { addEdge(postponedAnonymousFunctionNodes.getValue(anonymousFunction.symbol).first, it) }
+        }.also {
+            val captureNode = anonymousFunctionCaptureNodes[anonymousFunction.symbol]
+            if (captureNode != null) addEdge(captureNode, it, preferredKind = EdgeKind.CfgForward, label = CapturedByValue)
+            addEdge(postponedAnonymousFunctionNodes.getValue(anonymousFunction.symbol).first, it)
+        }
     }
 
     fun exitAnonymousFunction(anonymousFunction: FirAnonymousFunction): Triple<FunctionExitNode, PostponedLambdaExitNode?, ControlFlowGraph> {
@@ -306,6 +321,13 @@ class ControlFlowGraphBuilder {
                 addBackEdge(postponedExitNode, splitNode)
             }
         }
+
+        // Lambdas called inline do not capture any variables, so the capture edge needs to be marked as dead.
+        val captureNode = anonymousFunctionCaptureNodes.remove(anonymousFunction.symbol)
+        if (captureNode != null && anonymousFunction.inlineStatus == InlineStatus.Inline) {
+            CFGNode.killEdge(captureNode, graph.enterNode, propagateDeadness = false)
+        }
+
         return Triple(exitNode, postponedExitNode, graph)
     }
 
