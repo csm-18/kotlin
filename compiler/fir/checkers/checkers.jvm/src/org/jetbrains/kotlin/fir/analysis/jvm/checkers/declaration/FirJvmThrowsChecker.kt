@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.getAnnotationByClassId
 import org.jetbrains.kotlin.name.JvmStandardClassIds.THROWS_ANNOTATION_CLASS_ID
 
-object FirJvmThrowsChecker : FirFunctionChecker(MppCheckerKind.Common) {
+object FirJvmThrowsChecker : FirFunctionChecker(MppCheckerKind.Platform) {
     override fun check(declaration: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
         val session = context.session
         val annotation = declaration.getAnnotationByClassId(THROWS_ANNOTATION_CLASS_ID, session) ?: return
