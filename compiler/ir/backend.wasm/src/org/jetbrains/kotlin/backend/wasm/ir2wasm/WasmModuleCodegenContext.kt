@@ -132,9 +132,11 @@ class WasmFileCodegenContext(
 
     val scratchMemAddr: WasmSymbol<Int>
         get() = wasmFileFragment.scratchMemAddr
+            ?: WasmSymbol<Int>().also { wasmFileFragment.scratchMemAddr = it }
 
     val stringPoolSize: WasmSymbol<Int>
         get() = wasmFileFragment.stringPoolSize
+            ?: WasmSymbol<Int>().also { wasmFileFragment.stringPoolSize = it }
 
     fun addFieldInitializer(irField: IrFieldSymbol, instructions: List<WasmInstr>, isObjectInstanceField: Boolean) {
         wasmFileFragment.fieldInitializers.add(FieldInitializer(irField.getReferenceKey(), instructions, isObjectInstanceField))

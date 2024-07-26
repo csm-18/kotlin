@@ -630,8 +630,8 @@ class WasmSerializer(outputStream: OutputStream) {
             serialize(jsFuns, ::serialize)
             serialize(jsModuleImports, ::serialize)
             serialize(exports, ::serialize)
-            serialize(scratchMemAddr, ::serialize)
-            serialize(stringPoolSize, ::serialize)
+            serializeNullable(scratchMemAddr) { serialize(it, ::serialize) }
+            serializeNullable(stringPoolSize) { serialize(it, ::serialize) }
             serialize(fieldInitializers, ::serialize)
             serialize(mainFunctionWrappers, ::serialize)
             serializeNullable(testFun, ::serialize)

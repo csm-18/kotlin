@@ -40,8 +40,8 @@ class WasmCompiledFileFragment(
     val jsFuns: MutableList<JsCodeSnippet> = mutableListOf(),
     val jsModuleImports: MutableSet<String> = mutableSetOf(),
     val exports: MutableList<WasmExport<*>> = mutableListOf(),
-    val scratchMemAddr: WasmSymbol<Int> = WasmSymbol(),
-    val stringPoolSize: WasmSymbol<Int> = WasmSymbol(),
+    var scratchMemAddr: WasmSymbol<Int>? = null,
+    var stringPoolSize: WasmSymbol<Int>? = null,
     val fieldInitializers: MutableList<FieldInitializer> = mutableListOf(),
     val mainFunctionWrappers: MutableList<IdSignature> = mutableListOf(),
     var testFun: IdSignature? = null,
@@ -509,7 +509,7 @@ class WasmCompiledModuleFragment(
     private fun bindScratchMemAddr() {
         currentDataSectionAddress = alignUp(currentDataSectionAddress, INT_SIZE_BYTES)
         wasmCompiledFileFragments.forEach { fragment ->
-            fragment.scratchMemAddr.bind(currentDataSectionAddress)
+            fragment.scratchMemAddr?.bind(currentDataSectionAddress)
         }
     }
 
@@ -543,7 +543,7 @@ class WasmCompiledModuleFragment(
         }
 
         wasmCompiledFileFragments.forEach { fragment ->
-            fragment.stringPoolSize.bind(stringAddressAndId.size)
+            fragment.stringPoolSize?.bind(stringAddressAndId.size)
         }
 
         data.add(WasmData(WasmDataMode.Passive, stringDataSectionBytes.toByteArray()))
