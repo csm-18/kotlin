@@ -63,7 +63,7 @@ internal class BuildFinishFlowAction : FlowAction<BuildFinishFlowAction.Paramete
         val buildFusServiceProperty: Property<BuildFusService>
 
         @get:ServiceReference
-        val buildUidServiceProperty: Property<BuildUidService>
+        val buildUidServiceProperty: Property<BuildUidService?>?
 
         @get:ServiceReference
         val customFusServiceProperty: Property<GradleBuildFusStatisticsBuildService?>?
@@ -76,7 +76,7 @@ internal class BuildFinishFlowAction : FlowAction<BuildFinishFlowAction.Paramete
     override fun execute(parameters: Parameters) {
         parameters.buildFusServiceProperty.orNull?.recordBuildFinished(
             parameters.buildFailed.get(),
-            parameters.buildUidServiceProperty.get().buildId,
+            parameters.buildUidServiceProperty?.orNull?.buildId ?: "unknown_id",
             parameters.customFusServiceProperty?.orNull?.parameters?.configurationMetrics?.orNull ?: emptyList()
         )
     }
