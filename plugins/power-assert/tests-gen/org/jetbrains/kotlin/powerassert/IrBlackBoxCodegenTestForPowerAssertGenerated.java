@@ -289,6 +289,12 @@ public class IrBlackBoxCodegenTestForPowerAssertGenerated extends AbstractIrBlac
     }
 
     @Test
+    @TestMetadata("ChainedMultiline.kt")
+    public void testChainedMultiline() {
+      runTest("plugins/power-assert/testData/codegen/format/ChainedMultiline.kt");
+    }
+
+    @Test
     @TestMetadata("Multiline.kt")
     public void testMultiline() {
       runTest("plugins/power-assert/testData/codegen/format/Multiline.kt");
