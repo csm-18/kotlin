@@ -1432,10 +1432,9 @@ class ClassFileToSourceStubConverter(val kaptContext: KaptContextForStubGenerati
             is FirVarargArgumentsExpression -> {
                 convertConstantValueArgumentsFir(containingClass, constantValue, value.arguments)
             }
-            is FirFunctionCall -> {
+            else -> {
                 convertLiteralExpression(containingClass, constantValue)
             }
-            else -> null
         } ?: return null
         return treeMaker.Assign(treeMaker.SimpleName(name), expr)
     }
