@@ -70,6 +70,7 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext, ConeTypeCo
         isExtensionFunction: Boolean,
         attributes: List<AnnotationMarker>?
     ): SimpleTypeMarker {
+        require(constructor is ConeTypeConstructorMarker)
         val attributesList = attributes?.filterIsInstanceTo<ConeAttribute<*>, MutableList<ConeAttribute<*>>>(mutableListOf())
         val coneAttributes: ConeAttributes = if (isExtensionFunction) {
             require(constructor is ConeClassLikeLookupTag)
@@ -87,17 +88,22 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext, ConeTypeCo
         }
         @Suppress("UNCHECKED_CAST")
         return when (constructor) {
-            is ConeClassLikeLookupTag -> ConeClassLikeTypeImpl(
-                constructor,
-                (arguments as List<ConeTypeProjection>).toTypedArray(),
-                nullable,
-                coneAttributes,
-            )
-            is ConeTypeParameterLookupTag -> ConeTypeParameterTypeImpl(
-                constructor,
-                nullable,
-                coneAttributes
-            )
+            is ConeClassifierLookupTag -> {
+                when (constructor) {
+                    is ConeClassLikeLookupTag -> ConeClassLikeTypeImpl(
+                        constructor,
+                        (arguments as List<ConeTypeProjection>).toTypedArray(),
+                        nullable,
+                        coneAttributes,
+                    )
+                    is ConeTypeParameterLookupTag -> ConeTypeParameterTypeImpl(
+                        constructor,
+                        nullable,
+                        coneAttributes
+                    )
+                    else -> error("Unexpected /* sealed */ ConeClassifierLookupTag inheritor: ${constructor::class}")
+                }
+            }
             is ConeIntersectionType -> if (coneAttributes === constructor.attributes) {
                 constructor
             } else {
@@ -106,7 +112,11 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext, ConeTypeCo
                     constructor.upperBoundForApproximation?.withAttributes(coneAttributes)
                 )
             }
-            else -> error("!")
+            is ConeCapturedTypeConstructor,
+            is ConeIntegerLiteralType,
+            is ConeStubTypeConstructor,
+            is ConeTypeVariableTypeConstructor,
+                -> error("Unsupported type constructor: ${constructor::class}")
         }
     }
 
@@ -455,7 +465,8 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext, ConeTypeCo
         return withAttributes(attributes.remove(CompilerConeAttributes.Exact))
     }
 
-    override fun TypeConstructorMarker.toErrorType(): SimpleTypeMarker {
+    override fun TypeConstructorMarker.toErrorType(): ConeErrorType {
+        require(this is ConeTypeConstructorMarker)
         if (this is ConeClassLikeLookupTag) return createErrorType("Not found classifier: $classId", delegatedType = null)
         return createErrorType("Unknown reason", delegatedType = null)
     }

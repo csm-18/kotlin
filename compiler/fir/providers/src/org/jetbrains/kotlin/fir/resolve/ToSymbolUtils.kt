@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.fir.resolve
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
-import org.jetbrains.kotlin.fir.symbols.ConeClassifierLookupTag
+import org.jetbrains.kotlin.fir.types.ConeClassifierLookupTag
 import org.jetbrains.kotlin.fir.symbols.ConeClassifierLookupTagWithFixedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
