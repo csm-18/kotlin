@@ -21,6 +21,10 @@ data class KotlinMetadataPivotVersion(val major: Int, val minor: Int, val patch:
 
 /**
  * Shadow JAR transformer that excludes .kotlin_module files of a version >= [pivotVersion]
+ *
+ * Introduced as a hack for KGP for not limiting LV to 1.5 for compiler modules. To be removed after KT-70247.
+ * This excludes .kotlin_module files for compiler modules from the fat jars.
+ * These files are required only at compilation time, but we include the modules only for runtime
  */
 class KotlinModuleMetadataVersionBasedSkippingTransformer : Transformer {
     private val kotlinModules: MutableMap<String, ByteArray> = mutableMapOf()
