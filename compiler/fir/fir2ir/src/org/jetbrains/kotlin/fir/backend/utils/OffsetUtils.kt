@@ -48,7 +48,8 @@ internal inline fun <T : IrElement> KtSourceElement?.convertWithOffsets(f: (star
     if (
         isCompiledElement(psi) ||
         this?.kind == KtFakeSourceElementKind.DataClassGeneratedMembers ||
-        this?.kind == KtFakeSourceElementKind.ImplicitThisReceiverExpression
+        this?.kind == KtFakeSourceElementKind.ImplicitThisReceiverExpression ||
+        this?.kind == KtFakeSourceElementKind.DefaultAccessor.Setter
     ) {
         startOffset = UNDEFINED_OFFSET
         endOffset = UNDEFINED_OFFSET
