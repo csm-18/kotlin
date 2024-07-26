@@ -475,32 +475,27 @@ class ObjectFactory : private Pinned {
         ~HeapObject() = delete;
     };
 
-    // Needs to be kept compatible with `HeapObjHeader` just like `ArrayHeader` is compatible
+    // Needs to be kept compatible with `HeapObject` just like `ArrayHeader` is compatible
     // with `ObjHeader`: the former can always be casted to the other.
-    struct HeapArrayHeader {
-        using descriptor = type_layout::Composite<HeapArrayHeader, ObjectData, ArrayHeader>;
-
-        static HeapArrayHeader& from(ObjectData& objectData) noexcept { return *descriptor().template fromField<0>(&objectData); }
-
-        static HeapArrayHeader& from(ArrayHeader* array) noexcept { return *descriptor().template fromField<1>(array); }
-
-        ObjectData& objectData() noexcept { return *descriptor().template field<0>(this).second; }
-
-        ArrayHeader* array() noexcept { return descriptor().template field<1>(this).second; }
-
-    private:
-        HeapArrayHeader() = delete;
-        ~HeapArrayHeader() = delete;
-    };
-
     struct HeapArray {
-        using descriptor = type_layout::Composite<HeapArray, HeapArrayHeader, ArrayBody>;
+        using descriptor = type_layout::Composite<HeapArray, ObjectData, ArrayBody>;
 
         static descriptor make_descriptor(const TypeInfo* typeInfo, uint32_t size) noexcept {
             return descriptor{{}, type_layout::descriptor_t<ArrayBody>{typeInfo, size}};
         }
 
-        HeapArrayHeader& header(descriptor descriptor) noexcept { return *descriptor.template field<0>(this).second; }
+        static HeapArray& from(ObjectData& objectData) noexcept {
+            return *make_descriptor(nullptr, 0).template fromField<0>(&objectData);
+        }
+
+        static HeapArray& from(ArrayHeader* array) noexcept {
+            RuntimeAssert(array->obj()->heap(), "Array %p does not reside in the heap", array);
+            return *make_descriptor(nullptr, 0).template fromField<1>(ArrayBody::from(array));
+        }
+
+        ObjectData& objectData() noexcept { return *make_descriptor(nullptr, 0).template field<0>(this).second; }
+
+        ArrayHeader* array() noexcept { return make_descriptor(nullptr, 0).template field<1>(this).second->header(); }
 
     private:
         HeapArray() = delete;
@@ -538,7 +533,7 @@ public:
 
         static NodeRef From(ArrayHeader* array) noexcept {
             RuntimeAssert(array->obj()->heap(), "Must be a heap object");
-            return NodeRef(Storage::Node::FromData(reinterpret_cast<uint8_t*>(&HeapArrayHeader::from(array))));
+            return NodeRef(Storage::Node::FromData(reinterpret_cast<uint8_t*>(&HeapArray::from(array))));
         }
 
         static NodeRef From(ObjectData& objectData) noexcept {
@@ -598,7 +593,7 @@ public:
             RuntimeAssert(typeInfo->IsArray(), "Must be an array");
             auto descriptor = HeapArray::make_descriptor(typeInfo, count);
             auto& heapArray = *descriptor.construct(producer_.Insert(descriptor.size()).Data());
-            ArrayHeader* array = heapArray.header(descriptor).array();
+            ArrayHeader* array = heapArray.array();
             array->typeInfoOrMeta_ = const_cast<TypeInfo*>(typeInfo);
             array->count_ = count;
             // TODO: Consider supporting TF_IMMUTABLE: mark instance as frozen upon creation.

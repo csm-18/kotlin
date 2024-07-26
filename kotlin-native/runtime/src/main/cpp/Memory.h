@@ -139,13 +139,20 @@ struct ObjectBody {
     public:
         using value_type = ObjectBody;
 
-        explicit descriptor(const TypeInfo* typeInfo) noexcept : typeInfo_(typeInfo) {}
+        // `typeInfo` may be `nullptr` if `size()` and `construct()` are not used.
+        explicit descriptor(const TypeInfo* typeInfo) noexcept : typeInfo_(typeInfo) {
+            RuntimeAssert(!typeInfo_ || !typeInfo_->IsArray(), "Creating ObjectBody::descriptor for array with type info %p", typeInfo_);
+        }
 
         static constexpr size_t alignment() noexcept { return kObjectAlignment; }
-        uint64_t size() const noexcept { return typeInfo_->instanceSize_; }
+
+        uint64_t size() const noexcept {
+          RuntimeAssert(typeInfo_ != nullptr, "Cannot call size() on ObjectBody::descriptor(nullptr)");
+          return typeInfo_->instanceSize_;
+        }
 
         value_type* construct(uint8_t* ptr) noexcept {
-            RuntimeAssert(isZeroed(std_support::span<uint8_t>(ptr, size())), "Object::descriptor::construct@%p memory is not zeroed", ptr);
+            RuntimeAssert(isZeroed(std_support::span<uint8_t>(ptr, size())), "ObjectBody::descriptor::construct@%p memory is not zeroed", ptr);
             return reinterpret_cast<value_type*>(ptr);
         }
 
@@ -162,32 +169,43 @@ private:
     ~ObjectBody() = delete;
 };
 
-struct ArrayBody;
-
-template <>
-struct type_layout::descriptor<ArrayBody> {
-    class type {
+struct ArrayBody {
+    class descriptor {
     public:
         using value_type = ArrayBody;
 
-        explicit type(const TypeInfo* typeInfo, uint32_t count) noexcept :
-            // -(int32_t min) * uint32_t max cannot overflow uint64_t. And are capped
-            // at about half of uint64_t max.
-            size_(static_cast<uint64_t>(-typeInfo->instanceSize_) * count) {}
+        // `typeInfo` may be `nullptr` if `size()` and `construct()` are not used.
+        explicit descriptor(const TypeInfo* typeInfo, uint32_t count) noexcept : typeInfo_(typeInfo), count_(count) {
+            RuntimeAssert(!typeInfo_ || typeInfo_->IsArray(), "Creating ArrayBody::descriptor for a plain object with type info %p", typeInfo_);
+        }
 
         static constexpr size_t alignment() noexcept { return kObjectAlignment; }
-        uint64_t size() const noexcept { return size_; }
+        uint64_t size() const noexcept {
+            RuntimeAssert(typeInfo_ != nullptr, "Cannot call size() on ArrayBody::descriptor(nullptr)");
+            uint64_t elementSize = static_cast<uint64_t>(-typeInfo_->instanceSize_);
+            // This is true for now. May change with arrays of value types. Or with
+            // support of overaligned types.
+            size_t elementAlignment = elementSize;
+            // -(int32_t min) * uint32_t max cannot overflow uint64_t. And are capped
+            // at about half of uint64_t max.
+            auto elementsSize = elementSize * count_;
+            return AlignUp<uint64_t>(AlignUp(sizeof(ArrayHeader), elementAlignment) + elementsSize, alignment());
+        }
 
         value_type* construct(uint8_t* ptr) noexcept {
-            RuntimeAssert(isZeroed(std_support::span<uint8_t>(ptr, size_)), "ArrayBodyDescriptor::construct@%p memory is not zeroed", ptr);
+            RuntimeAssert(isZeroed(std_support::span<uint8_t>(ptr, size())), "ArrayBody::descriptor::construct@%p memory is not zeroed", ptr);
             return reinterpret_cast<ArrayBody*>(ptr);
         }
 
     private:
-        uint64_t size_;
+        const TypeInfo* typeInfo_;
+        uint32_t count_;
     };
-};
 
+    static ArrayBody* from(ArrayHeader* arr) noexcept { return reinterpret_cast<ArrayBody*>(arr); }
+
+    ArrayHeader* header() noexcept { return reinterpret_cast<ArrayHeader*>(this); }
+};
 
 } // namespace kotlin
 

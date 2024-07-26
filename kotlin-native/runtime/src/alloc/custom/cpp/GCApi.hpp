@@ -47,32 +47,27 @@ private:
     ~HeapObject() = delete;
 };
 
-// Needs to be kept compatible with `HeapObjHeader` just like `ArrayHeader` is compatible
+// Needs to be kept compatible with `HeapObject` just like `ArrayHeader` is compatible
 // with `ObjHeader`: the former can always be casted to the other.
-struct HeapArrayHeader {
-    using descriptor = type_layout::Composite<HeapArrayHeader, gc::GC::ObjectData, ArrayHeader>;
-
-    static HeapArrayHeader& from(gc::GC::ObjectData& objectData) noexcept { return *descriptor().fromField<0>(&objectData); }
-
-    static HeapArrayHeader& from(ArrayHeader* array) noexcept { return *descriptor().fromField<1>(array); }
-
-    gc::GC::ObjectData& objectData() noexcept { return *descriptor().field<0>(this).second; }
-
-    ArrayHeader* array() noexcept { return descriptor().field<1>(this).second; }
-
-private:
-    HeapArrayHeader() = delete;
-    ~HeapArrayHeader() = delete;
-};
-
 struct HeapArray {
-    using descriptor = type_layout::Composite<HeapArray, HeapArrayHeader, ArrayBody>;
+    using descriptor = type_layout::Composite<HeapArray, gc::GC::ObjectData, ArrayBody>;
 
     static descriptor make_descriptor(const TypeInfo* typeInfo, uint32_t size) noexcept {
         return descriptor{{}, type_layout::descriptor_t<ArrayBody>{typeInfo, size}};
     }
 
-    HeapArrayHeader& header(descriptor descriptor) noexcept { return *descriptor.field<0>(this).second; }
+    static HeapArray& from(gc::GC::ObjectData& objectData) noexcept {
+        return *make_descriptor(nullptr, 0).fromField<0>(&objectData);
+    }
+
+    static HeapArray& from(ArrayHeader* array) noexcept {
+        RuntimeAssert(array->obj()->heap(), "Array %p does not reside in the heap", array);
+        return *make_descriptor(nullptr, 0).fromField<1>(ArrayBody::from(array));
+    }
+
+    gc::GC::ObjectData& objectData() noexcept { return *make_descriptor(nullptr, 0).field<0>(this).second; }
+
+    ArrayHeader* array() noexcept { return make_descriptor(nullptr, 0).field<1>(this).second->header(); }
 
 private:
     HeapArray() = delete;

@@ -54,7 +54,7 @@ ArrayHeader* CustomAllocator::CreateArray(const TypeInfo* typeInfo, uint32_t cou
     auto descriptor = HeapArray::make_descriptor(typeInfo, count);
     auto size = AllocationSize::bytesAtLeast(descriptor.size());
     auto& heapArray = *descriptor.construct(Allocate(size));
-    ArrayHeader* array = heapArray.header(descriptor).array();
+    ArrayHeader* array = heapArray.array();
     array->typeInfoOrMeta_ = const_cast<TypeInfo*>(typeInfo);
     array->count_ = count;
     return array;
