@@ -444,6 +444,18 @@ internal class KonanSymbols(
 
     val assertMode = topLevelClass(FqName("kotlin.AssertionMode"))
     val currentAssertMode = irBuiltIns.findProperties(Name.identifier("currentAssertionMode"), FqName("kotlin")).single()
+    val conditionsOnlyMode: IrEnumEntry by lazy {
+        assertMode.owner.declarations.filterIsInstance<IrEnumEntry>()
+                .single { it.name.asString() == "CONDITIONS_ONLY" }
+    }
+    val enabledMode: IrEnumEntry by lazy {
+        assertMode.owner.declarations.filterIsInstance<IrEnumEntry>()
+                .single { it.name.asString() == "ENABLED" }
+    }
+    val disabledMode: IrEnumEntry by lazy {
+        assertMode.owner.declarations.filterIsInstance<IrEnumEntry>()
+                .single { it.name.asString() == "DISABLED" }
+    }
 
     private fun topLevelClass(fqName: FqName): IrClassSymbol = irBuiltIns.findClass(fqName.shortName(), fqName.parent())!!
 

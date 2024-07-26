@@ -593,9 +593,7 @@ private val assertionWrapperPhase = createFileLoweringPhase(
 )
 
 private val assertionRemoverPhase = createFileLoweringPhase(
-        lowering = { context: NativeGenerationState ->
-            NativeAssertionRemoverLowering(context.context, context.config.assertsEnabled)
-        },
+        lowering = ::NativeAssertionRemoverLowering,
         name = "AssertionRemoverLowering",
         description = "Replaces `currentAssertionMode` intrinsic with actual value, depending on the assertion mode",
         prerequisite = setOf(assertionWrapperPhase),

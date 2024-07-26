@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irIfThen
 import org.jetbrains.kotlin.backend.konan.Context
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBody
@@ -19,7 +20,9 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrReturnableBlock
 import org.jetbrains.kotlin.ir.expressions.impl.IrCompositeImpl
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
+import org.jetbrains.kotlin.ir.util.dump
 import org.jetbrains.kotlin.ir.util.inlineFunction
+import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
@@ -56,12 +59,9 @@ internal class NativeAssertionWrapperLowering(val context: Context) : FileLoweri
     private val asserts = context.ir.symbols.asserts.toSet()
     private val assertMode = context.ir.symbols.assertMode
     private val currentAssertionMode = context.ir.symbols.currentAssertMode.owner.getter!!
-    private val conditionsOnlyMode = assertMode.owner.declarations.filterIsInstance<IrEnumEntry>()
-            .single { it.name.asString() == "CONDITIONS_ONLY" } // TODO
-    private val enabledMode = assertMode.owner.declarations.filterIsInstance<IrEnumEntry>()
-            .single { it.name.asString() == "ENABLED" }
-    private val disabledMode = assertMode.owner.declarations.filterIsInstance<IrEnumEntry>()
-            .single { it.name.asString() == "DISABLED" }
+    private val conditionsOnlyMode = context.ir.symbols.conditionsOnlyMode
+    private val enabledMode = context.ir.symbols.enabledMode
+    private val disabledMode = context.ir.symbols.disabledMode
 
     fun lower(function: IrFunction) {
         function.transformChildren(Transformer(), function.symbol)
@@ -74,6 +74,10 @@ internal class NativeAssertionWrapperLowering(val context: Context) : FileLoweri
     private inner class Transformer : IrElementTransformer<IrSymbol> {
         override fun visitElement(element: IrElement, data: IrSymbol): IrElement {
             return super.visitElement(element, if (element is IrSymbolOwner) element.symbol else data)
+        }
+
+        override fun visitDeclaration(declaration: IrDeclarationBase, data: IrSymbol): IrStatement {
+            return super.visitDeclaration(declaration, declaration.symbol)
         }
 
         override fun visitCall(expression: IrCall, data: IrSymbol): IrElement {
@@ -93,11 +97,10 @@ internal class NativeAssertionWrapperLowering(val context: Context) : FileLoweri
                 // outerCheck = currentAssertionMode != AssertionMode.DISABLED
                 // innerCheck = currentAssertionMode == AssertionMode.ENABLED
 
-                val condition = irTemporary(expression.getValueArgument(0))
-                expression.putValueArgument(0, irGet(condition))
                 val innerIf = irIfThen(innerCheck, expression)
                 val outerIf = irIfThen(outerCheck, irBlock {
-                    +condition
+                    val condition = irTemporary(expression.getValueArgument(0))
+                    expression.putValueArgument(0, irGet(condition))
                     +innerIf
                 })
 
@@ -110,15 +113,13 @@ internal class NativeAssertionWrapperLowering(val context: Context) : FileLoweri
 /**
  * This lowering replaces `currentAssertionMode` intrinsic with actual value, depending on the assertion mode.
  */
-internal class NativeAssertionRemoverLowering(val context: Context, val assertionsEnabled: Boolean) : FileLoweringPass {
+internal class NativeAssertionRemoverLowering(val context: Context) : FileLoweringPass {
+    private val assertionsEnabled: Boolean = context.config.assertsEnabled
     private val assertMode = context.ir.symbols.assertMode
     private val currentAssertionMode = context.ir.symbols.currentAssertMode.owner.getter!!
-    private val conditionsOnlyMode = assertMode.owner.declarations.filterIsInstance<IrEnumEntry>()
-            .single { it.name.asString() == "CONDITIONS_ONLY" } // TODO
-    private val enabledMode = assertMode.owner.declarations.filterIsInstance<IrEnumEntry>()
-            .single { it.name.asString() == "ENABLED" }
-    private val disabledMode = assertMode.owner.declarations.filterIsInstance<IrEnumEntry>()
-            .single { it.name.asString() == "DISABLED" }
+    private val conditionsOnlyMode = context.ir.symbols.conditionsOnlyMode
+    private val enabledMode = context.ir.symbols.enabledMode
+    private val disabledMode = context.ir.symbols.disabledMode
 
     override fun lower(irFile: IrFile) {
         irFile.transformChildrenVoid(object : IrElementTransformerVoid() {
