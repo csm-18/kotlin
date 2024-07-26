@@ -24,7 +24,6 @@
 #include "KAssert.h"
 #include "Common.h"
 #include "TypeInfo.h"
-#include "TypeLayout.hpp"
 #include "PointerBits.h"
 #include "Utils.hpp"
 
@@ -131,83 +130,6 @@ struct ArrayHeader {
   uint32_t count_;
 };
 static_assert(alignof(ArrayHeader) <= kotlin::kObjectAlignment);
-
-namespace kotlin {
-
-struct ObjectBody {
-    class descriptor {
-    public:
-        using value_type = ObjectBody;
-
-        // `typeInfo` may be `nullptr` if `size()` and `construct()` are not used.
-        explicit descriptor(const TypeInfo* typeInfo) noexcept : typeInfo_(typeInfo) {
-            RuntimeAssert(!typeInfo_ || !typeInfo_->IsArray(), "Creating ObjectBody::descriptor for array with type info %p", typeInfo_);
-        }
-
-        static constexpr size_t alignment() noexcept { return kObjectAlignment; }
-
-        uint64_t size() const noexcept {
-          RuntimeAssert(typeInfo_ != nullptr, "Cannot call size() on ObjectBody::descriptor(nullptr)");
-          return typeInfo_->instanceSize_;
-        }
-
-        value_type* construct(uint8_t* ptr) noexcept {
-            RuntimeAssert(isZeroed(std_support::span<uint8_t>(ptr, size())), "ObjectBody::descriptor::construct@%p memory is not zeroed", ptr);
-            return reinterpret_cast<value_type*>(ptr);
-        }
-
-    private:
-        const TypeInfo* typeInfo_;
-    };
-
-    static ObjectBody* from(ObjHeader* object) noexcept { return reinterpret_cast<ObjectBody*>(object); }
-
-    ObjHeader* header() noexcept { return reinterpret_cast<ObjHeader*>(this); }
-
-private:
-    ObjectBody() = delete;
-    ~ObjectBody() = delete;
-};
-
-struct ArrayBody {
-    class descriptor {
-    public:
-        using value_type = ArrayBody;
-
-        // `typeInfo` may be `nullptr` if `size()` and `construct()` are not used.
-        explicit descriptor(const TypeInfo* typeInfo, uint32_t count) noexcept : typeInfo_(typeInfo), count_(count) {
-            RuntimeAssert(!typeInfo_ || typeInfo_->IsArray(), "Creating ArrayBody::descriptor for a plain object with type info %p", typeInfo_);
-        }
-
-        static constexpr size_t alignment() noexcept { return kObjectAlignment; }
-        uint64_t size() const noexcept {
-            RuntimeAssert(typeInfo_ != nullptr, "Cannot call size() on ArrayBody::descriptor(nullptr)");
-            uint64_t elementSize = static_cast<uint64_t>(-typeInfo_->instanceSize_);
-            // This is true for now. May change with arrays of value types. Or with
-            // support of overaligned types.
-            size_t elementAlignment = elementSize;
-            // -(int32_t min) * uint32_t max cannot overflow uint64_t. And are capped
-            // at about half of uint64_t max.
-            auto elementsSize = elementSize * count_;
-            return AlignUp<uint64_t>(AlignUp(sizeof(ArrayHeader), elementAlignment) + elementsSize, alignment());
-        }
-
-        value_type* construct(uint8_t* ptr) noexcept {
-            RuntimeAssert(isZeroed(std_support::span<uint8_t>(ptr, size())), "ArrayBody::descriptor::construct@%p memory is not zeroed", ptr);
-            return reinterpret_cast<ArrayBody*>(ptr);
-        }
-
-    private:
-        const TypeInfo* typeInfo_;
-        uint32_t count_;
-    };
-
-    static ArrayBody* from(ArrayHeader* arr) noexcept { return reinterpret_cast<ArrayBody*>(arr); }
-
-    ArrayHeader* header() noexcept { return reinterpret_cast<ArrayHeader*>(this); }
-};
-
-} // namespace kotlin
 
 static inline ObjHeader* const kInitializingSingleton = reinterpret_cast<ObjHeader*>(1);
 ALWAYS_INLINE inline bool isNullOrMarker(const ObjHeader* obj) noexcept {
